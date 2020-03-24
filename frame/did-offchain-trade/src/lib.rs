@@ -65,7 +65,7 @@ pub trait Trait: system::Trait + timestamp::Trait {
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
 		pub Key get(key): u32;
-		pub AccessConditionList get(appinfo_of): 
+		pub AccessConditionList get(condition_list): 
 			map hasher(blake2_256) T::AccountId => AccessConditionOf<T>;
 		pub KeyOf get(key_of): map u32 => T::AccountId;
 		pub DocumentPermissionsState get(permission):
@@ -121,9 +121,9 @@ decl_module! {
 				let _key = key + 1;
 				<Key>::put(_key);
 				Self::deposit_event(RawEvent::AccessConditionCreated(
-					access_condition_public.clone(),
-					players[0].clone(),
-					players[1].clone(),
+					access_condition_public,
+					players[0],
+					players[1],
 					key,
 				));
 				Ok(())
@@ -134,8 +134,8 @@ decl_module! {
 					players: players.clone(),
 					seqNum: 0,
 					status: AppStatus::IDLE,
-					owner: players[1].clone(),
-					grantee: players[0].clone(),
+					owner: players[1],
+					grantee: players[0],
 					did: did,
 					didList: _didList,
 					key: key,
@@ -148,9 +148,9 @@ decl_module! {
 				let _key = key + 1;
 				<Key>::put(_key);
 				Self::deposit_event(RawEvent::AccessConditionCreated(
-					access_condition_public.clone(),
-					players[1].clone(),
-					players[0].clone(),
+					access_condition_public,
+					players[1],
+					players[0],
 					key
 				));
 			}
@@ -159,9 +159,66 @@ decl_module! {
 
 		pub fn intendSettle() {}
 
-		pub fn getStatus() {}
+		pub fn getStatus(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			let access_condition = Self::condition_list(&condition_address);
+			let status = access_condition.status;
+			
+			if (status == AppStatus::IDLE) {
+				Self::deposit_event(
+					RawEvent::IDLE_STATUS(
+						condition_address, 
+						<system::Module<T>>::block_number(),
+				));
+			} else {
+				Self::deposit_event(
+					RawEvent::FINALIZED_STATUS(
+						condition_address,
+						<system::Module<T>>::block_number(),
+					)
+				);
+			}
+			Ok(())
+		}
 
-		pub fn getSeqNum() {}
+		pub fn getSeqNum(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			let access_condition = Self::condition_list(&condition_address);
+			let seq = access_condition.seqNum;
+			Self::deposit_event(
+				RawEvent::SeqNum(
+					seq,
+					<system::Module<T>>::block_number(),
+				)
+			);
+			Ok(())
+		}
+
+		pub fn getOwner(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			let access_condition = Self::condition_list(&condition_address);
+			let owner = access_condition.owner;
+			Self::deposit_event(
+				RawEvent::Owner(
+					owner,
+					<system::Module<T>>::block_number(),
+				)
+			);
+			Ok(())
+		}
+
+		pub fn getGrantee(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			let access_condition = Self::condition_list(&condition_address);
+			let grantee = access_condition.grantee;
+			Self::deposit_event(
+				RawEvent::Grantee(
+					grantee,
+					<system::Module<T>>::block_number(),
+				)
+			);
+			Ok(())
+		}
 
 		pub fn isFinalized() {}
 
@@ -181,7 +238,11 @@ decl_event!(
 	{
 		AccessConditionCreated(AccountId, AccountId, AccountId, u32),
 		IntendSettle(u32, BlockNumber),
+		IDLE_STATUS(AccountId, BlockNumber),
 		FINALIZED_STATUS(AccountId, BlockNumber),
+		SeqNum(u32, BlockNumber),
+		Owner(AccountId, BlockNumber),
+		Grantee(AccountId, BlockNumber),
 		BooleanOutcome(bool),
 		AccessPermission(bool),
 		NewDID(AccountId),
