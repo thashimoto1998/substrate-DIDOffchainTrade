@@ -44,7 +44,7 @@ pub struct AppState<AccountId> {
 	pub state: AccountId,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, Runtime)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct StateProof<AccountId, Signature> {
 	pub appState: AppState<AccountId>,
 	pub sigs: Vec<Signature>,
