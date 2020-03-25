@@ -306,7 +306,7 @@ impl<T: Trait> Module<T> {
 		signers: Vec<T::AccountId>,
 	) -> DispatchResult {
 		if ((&signatures[0].verify(msg, &signers[0])) && (&signatures[1].verify(msg, &signers[1]))
-			|| ((&signatures[1].verify(msg, &signers[1]) && (&signatures[0].verify(msg, &signers[0]))))
+			|| ((&signatures[1].verify(msg, &signers[0]) && (&signatures[0].verify(msg, &signers[1]))))
 		) {
 			Ok(())
 		} else {
