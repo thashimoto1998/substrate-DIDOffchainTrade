@@ -117,7 +117,7 @@ If not receive the settlement as expected, PUBLISHER can choose to submit an on-
 If cooperative settling is not possible, PUBLISHERS can initiate a unilateral settling by calling the `intendSettle()` API, which takes the co-signed off-chain simplex states as input. The CelerLedger contract will compute the settled balance distributions based on the simplex states and the results of pending payments queried from the PayRegistry.
 A challenge time window is opened after the unilateral settlement request, for the other peer to submit simplex channel states with higher sequence numbers if exists. After the challenge window is closed, one can call the `confirmSettle()` API to finish the operation and close the channel.
 
-## When PUBLISHER and CONSUMER want to contract another data.
+## When PUBLISHER and CONSUMER want to trade another data.
 
 ![3](image/another-did-2.png)
 
