@@ -75,11 +75,11 @@ pub trait Trait: system::Trait + timestamp::Trait {
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
 		pub AccessConditionAddressKey get(fn key): u32;
-		pub AccessConditionAddressList get(fn key_of): map u32 => T::AccountId;
+		pub AccessConditionAddressList get(fn key_of): map u32 => Option<T::AccountId>;
 		pub AccessConditionList get(condition_list): 
 			map hasher(blake2_256) T::AccountId => AccessConditionOf<T>;
 		pub DIDKey get(fn did_key): u32;
-		pub DIDList get(fn did_list): map u32 => T::AccountId;
+		pub DIDList get(fn did_list): map u32 => Option<T::AccountId>;
 		pub DocumentPermissionsState get(fn permission):
 			double_map hasher(blake2_256) T::AccountId, hasher(blake2_256) T::AccountId => bool;
 		pub FinalizedOf: map hasher(blake2_256) T::AccountId => bool;
@@ -100,6 +100,12 @@ decl_module! {
 			did: T::AccountId,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
+
+			ensure!(players.len() == 2, "not 2 palyers")
+
+			let isPlayer1: bool = T::DIDOwner::is_did_owner(&did, &players[0]);
+			let isPlayer2: bool = T::DIDOwner::is_did_owner(&did, &players[1]);
+			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
 			//TODO: Refactoring
 			// Create new Address of Access Condition
@@ -122,10 +128,6 @@ decl_module! {
 			<DIDList<T>>::insert(didKey, &did);
 			<DIDKey>::mutate(|key| *key += 1);
 
-			let isPlayer1: bool = T::DIDOwner::is_did_owner(&did, &players[0]);
-			let isPlayer2: bool = T::DIDOwner::is_did_owner(&did, &players[1]);
-			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
-			
 			// TODO: Refactoring
 			if (isPlayer1 == true) {
 				let access_condition = AccessConditionOf<T> {
@@ -141,11 +143,11 @@ decl_module! {
 
 				<AccessConditionAddressKey>::mutate(|key| *key += 1);
 				<AccessConditionAddressList<T>>::insert(_key, access_condition_public.clone());
-				<AccessConditionAddressList<T>>::insert(access_condition_public.clone(), access_condition.clone());
+				<AccessConditionList<T>>::insert(&access_condition_public, access_condition.clone());
 				<KeyOf<T>>::insert(_key, access_condition_public.clone());
-				<DocumentPermissionsState<T>>::insert(&did, players[1].clone(), false);
-				<FinalizedOf<T>>::insert(access_condition_public.clone(), false);
-				<OutcomeOf<T>>::insert(access_condition_public.clone(), false);
+				<DocumentPermissionsState<T>>::insert(&did, &players[1], false);
+				<FinalizedOf<T>>::insert(&access_condition_public, false);
+				<OutcomeOf<T>>::insert(&access_condition_public, false);
 				
 				Self::deposit_event(RawEvent::AccessConditionCreated(
 					access_condition_public,
@@ -160,19 +162,19 @@ decl_module! {
 					players: players.clone(),
 					seqNum: 0,
 					status: AppStatus::IDLE,
-					owner: players[1],
-					grantee: players[0],
+					owner: players[1].clone(),
+					grantee: players[0].clone(),
 					did: did,
 					key: _key,
 				};
 
 				<AccessConditionAddressKey>::mutate(|key| *key += 1);
 				<AccessConditionAddressList<T>>::insert(_key, access_condition_public.clone());
-				<AccessConditionList<T>>::insert(access_condition_public.clone(), access_condition);
+				<AccessConditionList<T>>::insert(&access_condition_public, access_condition);
 				<KeyOf<T>>::insert(_key, access_condition_public.clone());
-				<DocumentPermissionsState<T>>::insert(&did, players[0].clone(), false);
-				<FinalizedOf<T>>::insert(access_condition_public.clone(), false);
-				<OutcomeOf<T>>::insert(access_condition_public.clone(), false);
+				<DocumentPermissionsState<T>>::insert(&did, &players[0], false);
+				<FinalizedOf<T>>::insert(&access_condition_public, false);
+				<OutcomeOf<T>>::insert(&access_condition_public, false);
 
 				Self::deposit_event(RawEvent::AccessConditionCreated(
 					access_condition_public,
@@ -190,20 +192,104 @@ decl_module! {
 			transaction: StateProof<T::Signature>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let players: Vec<T::AccountId> = Self::condition_list(&condition_address).players;
-			ensure!(&who == &players[0] || &who == &palyers[1], "sender is not players");
+
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condtion) => _condtion,
+				None => return Err(Error<T>::InvalidConditionAddress.into())
+			};
+			
+			let players: Vec<T::AccountId> = access_condition.players;
+			ensure!(&who == &players[0] || &who == &palyers[1], Error::<T>::InvalidSender);
 			
 			let mut encoded = transaction.appState.nonce.encode();
 			encoded.extend(transaction.appState.seqNum.encode());
 			encoded.extend(transaction.appState.state.encode());
 
-			Self::valid_signers(transaction.sigs, encoded, players);
+			Self::valid_signers(transaction.sigs, encoded, players)?;
+
+			ensure!(access_condition.nonce == transaction.appState.nonce, Error::<T>::InvalidNonce);
+			ensure!(access_condition.seqNum < transaction.appState.seqNum, Error::<T>::InvalidSeqNum);
+
+			if (transaction.appState.state == 0) {
+				let new_access_condition = AccessConditionOf<T> {
+					nonce: access_condition.nonce,
+					players: access_condition.players.clone(),
+					seqNum: transaction.seqNum,
+					status: AppStatus::IDLE,
+					owner: access_condition.grantee.clone(),
+					grantee: access_condition.owner.clone(),
+					did: access_condition.did,
+					key: access_condition.key,
+				};
+				
+				<AccessConditionList<T>>::insert(&condition_address, new_access_condition);
+				
+				Self::deposit_event(
+					RawEvent::SwapPosition(
+						condition_address,
+						<system::Module<T>>::block_number(),
+					);
+					Ok(())
+				)
+			} else if (transaction.appState.state == 1) {
+				let new_access_condition = AccessConditionOf<T> {
+					nonce: access_condition.nonce,
+					players: access_condition.players.clone(),
+					seqNum: transaction.seqNum,
+					status: AppStatus::IDLE,
+					owner: access_condition.owner.clone(),
+					grantee: access_condition.grantee.clone(),
+					did: access_condition.did,
+					key: access_condition.key,
+				};
+
+				<AccessConditionList<T>>:insert(&condition_address, new_access_condition);
+				
+				Self::deposit_event(
+					RawEvent::SetIdle(
+						condition_address,
+						<system::Module<T>>::block_number(),
+					);
+					Ok(())
+				)
+			} else {
+				let did = match Self::did_list(state) {
+					Some(_did) => _did,
+					None => return Err(Error<T>::InvalidState.into())
+				};
+
+				let new_access_condition = AccessConditionOf<T> {
+					nonce: access_condition.nonce,
+					players: access_condition.players.clone(),
+					seqNum: transaction.seqNum,
+					status: AppStatus::FINALIZED,
+					owner: access_condition.owner.clone(),
+					grantee: access_condition.grantee.clone(),
+					key: access_condition.key,
+				};
+				<AccessConditionAddressList<T>>::insert(&condition_address, new_access_condition);
+				<DocumentPermissionsState<T>>::insert(&did, &access_condition.owner, true);
+				<FinalizedOf<T>>::insert(&condition_address, true);
+				<OutcomeOf<T>>::insert(&condition_address, true);
+				Self::deposit_event(
+					RawEvent::IntendSettle(
+						condition_address,
+						<system::Module<T>>::block_number(),
+					);
+					Ok(())
+				)
+			}
 			
 		}
 
 		pub fn getStatus(origin, condition_address: T::AccountId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			let access_condition = Self::condition_list(&condition_address);
+			
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condtion) => _condtion,
+				None => return Err(Error<T>::InvalidConditionAddress.into())
+			};
+			
 			let status = access_condition.status;
 			
 			if (status == AppStatus::IDLE) {
@@ -225,7 +311,12 @@ decl_module! {
 
 		pub fn getSeqNum(origin, condition_address: T::AccountId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			let access_condition = Self::condition_list(&condition_address);
+			
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condtion) => _condtion,
+				None => return Err(Error<T>::InvalidConditionAddress.into())
+			};
+
 			let seq = access_condition.seqNum;
 			Self::deposit_event(
 				RawEvent::SeqNum(
@@ -238,7 +329,12 @@ decl_module! {
 
 		pub fn getOwner(origin, condition_address: T::AccountId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			let access_condition = Self::condition_list(&condition_address);
+
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condtion) => _condtion,
+				None => return Err(Error<T>::InvalidConditionAddress.into())
+			};
+			
 			let owner = access_condition.owner;
 			Self::deposit_event(
 				RawEvent::Owner(
@@ -251,7 +347,12 @@ decl_module! {
 
 		pub fn getGrantee(origin, condition_address: T::AccountId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			let access_condition = Self::condition_list(&condition_address);
+			
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condtion) => _condtion,
+				None => return Err(Error<T>::InvalidConditionAddress.into())
+			};
+
 			let grantee = access_condition.grantee;
 			Self::deposit_event(
 				RawEvent::Grantee(
@@ -279,7 +380,9 @@ decl_event!(
 	<T as system::Trait>::BlockNumber,
 	{
 		AccessConditionCreated(AccountId, AccountId, AccountId, u32),
-		IntendSettle(u32, BlockNumber),
+		SwapPosition(AccountId, BlockNumber),
+		SetIdle(AccountId, BlockNumber),
+		IntendSettle(AccountId, BlockNumber),
 		IDLE_STATUS(AccountId, BlockNumber),
 		FINALIZED_STATUS(AccountId, BlockNumber),
 		SeqNum(u32, BlockNumber),
@@ -294,8 +397,12 @@ decl_event!(
 decl_error! {
 	pub enum Error for Module<T: Trait> {
 		NotOwner,
+		InvalidLength,
+		InvalidSender,
+		InvalidNonce,
 		InvalidSeqNum,
 		InvalidSignature,
+		InvalidConditionAddress,
 	}
 }
 
