@@ -79,7 +79,8 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure, StorageMap,
+    decl_error, decl_event, decl_module, decl_storage, 
+    dispatch::DispatchResult, ensure, StorageMap
 };
 use sp_runtime::traits::{Hash, IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
@@ -113,9 +114,9 @@ pub trait Trait: system::Trait + timestamp::Trait {
     type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
 
-pub trait DIDOwner<T::AccountId> {
+pub trait DIDOwner<AccountId> {
     fn is_did_owner(identity: &AccountId, actual_owner: &AccountId) -> bool;
-    fn did_identity_owner(identity: &AccountId) -> Option<AccountId>;
+    fn did_identity_owner(identity: &AccountId) -> AccountId;
 }
 
 decl_storage! {
@@ -580,7 +581,7 @@ impl<T: Trait> Module<T> {
 impl<T: Trait> DIDOwner<T::AccountId> for Module<T> {
     fn is_did_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
         let owner = Self::did_identity_owner(identity);
-        if owner == actual_owner {
+        if owner == *actual_owner {
             return true;
         } else {
             return false;
@@ -588,7 +589,11 @@ impl<T: Trait> DIDOwner<T::AccountId> for Module<T> {
     }
 
     fn did_identity_owner(identity: &T::AccountId) -> T::AccountId {
-        <OwnerOf<T>>::get(identity)
+        let owner = match Self::owner_of(identity) {
+            Some(id) => id,
+            None => identity.clone(),
+        };
+        owner
     }
 }
 

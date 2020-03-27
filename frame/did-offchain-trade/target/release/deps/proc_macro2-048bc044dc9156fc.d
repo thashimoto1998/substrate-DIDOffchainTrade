@@ -1,0 +1,10 @@
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/did-offchain-trade/target/release/deps/proc_macro2-048bc044dc9156fc.rmeta: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/strnom.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/fallback.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/wrapper.rs
+
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/did-offchain-trade/target/release/deps/libproc_macro2-048bc044dc9156fc.rlib: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/strnom.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/fallback.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/wrapper.rs
+
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/did-offchain-trade/target/release/deps/proc_macro2-048bc044dc9156fc.d: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/strnom.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/fallback.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/wrapper.rs
+
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/lib.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/strnom.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/fallback.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/proc-macro2-1.0.9/src/wrapper.rs:
