@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/target/release/build/typenum-558c64099d4bb187/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/target/release/build/typenum-558c64099d4bb187/out/op.rs

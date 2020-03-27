@@ -7,10 +7,11 @@ use frame_support::{
 	dispatch::DispatchResult, ensure, 
 	storage::{StorageMap, StorageDoubleMap},
 };
+use sp_runtime::{KeyTypeId};
 use sp_runtime::traits::{Hash, IdentifyAccount, Member, Verify};
-use sp_std::{prelude::*m vec::Vec};
+use sp_std::{prelude::*, vec::Vec};
 use system::ensure_signed;
-use sp_core::RuntimeDebug; 
+use sp_core::{sr25519, Pair, RuntimeDebug}; 
 
 #[cfg(test)]
 mod mock;
@@ -22,7 +23,7 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"offchain-trade");
 pub mod crypto {
 	use super::KEY_TYPE;
 	use sp_runtime::app_crypto::{app_crypto, sr25519};
-	app_crypto!(sr255199, KEY_TYPE);
+	app_crypto!(sr25519, KEY_TYPE);
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
@@ -41,7 +42,7 @@ pub enum AppStatus {
 	FINALIZED,
 }
 
-type AcessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
+type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct AppState {
@@ -62,21 +63,20 @@ pub trait Trait: system::Trait + timestamp::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	type Public: IdentifyAccount<AccountId = Self::AccountId>;
 	type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
-	type DIDOwner: DIDOwner<AccountId = Self::AccountId>;
-	type SubmitSignedTransaction: offchain::SubmitSignedTransaction<Self, <Self as Trait>::Call>;
-	type Call: From<Call<Self>>;
-	type GracePeriod: Get<Self::BlockNumber>;
+	type DIDOwner: DIDOwner<AccountId>; 
 }
 
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
 		pub AccessConditionAddressKey get(fn key): u32;
-		pub AccessConditionAddressList get(fn key_of): map u32 => Option<T::AccountId>;
+		pub AccessConditionAddressList get(fn key_of): 
+			map hasher(blake2_256) u32 => Option<T::AccountId>;
 		pub AccessConditionList get(condition_list): 
 			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
 		pub DIDKey get(fn did_key): u32;
-		pub DIDList get(fn did_list): map u32 => Option<T::AccountId>;
+		pub DIDList get(fn did_list): 
+			map hasher(blake2_256) u32 => Option<T::AccountId>;
 		pub KeyOfDID get (fn key_of_did): 
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		pub DocumentPermissionsState get(fn permission):
@@ -106,18 +106,13 @@ decl_module! {
 			let isPlayer2: bool = T::DIDOwner::is_did_owner(&did, &players[1])?;
 			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
-			//TODO: Refactoring
 			// Create new Address of Access Condition
-			let _key: u32 = <AccessConditionAddressKey>::get();
-			let key_string: String = _key.to_string();
-			let access_condition_string: String = "AccessCondition" + key_string;
-			let access_condition_pair: sr25519::Pair = Self::account_pair(access_condition_string);
-			let access_condition_public: sr25519::Public = Self::account_key(access_condition_pair);
-
+			let condition_address = Self::create_condition_address();
+		
 			// TODO: Refactoring and default <DIDKey> is 2.
 			let mut didKey: u32 = |_didKey| {
 				let mut _didKey = Self::did_key();
-				if (_didKey == 0 || _didKey == 1) {
+				if _didKey == 0 || _didKey == 1 {
 					_didKey = 2;
 					_didKey
 				} else {
@@ -128,59 +123,13 @@ decl_module! {
 			<KeyOfDID<T>>::insert(&did, didKey);
 			<DIDKey>::mutate(|key| *key += 1);
 
-			// TODO: Refactoring
-			if (isPlayer1 == true) {
-				let access_condition = AccessConditionOf<T> {
-					nonce: nonce,
-					players: players.clone(),
-					seqNum: 0,
-					status: AppStatus::IDLE,
-					owner: players[0].clone(),
-					grantee: players[1].clone(),
-				};
-
-				<AccessConditionAddressKey>::mutate(|key| *key += 1);
-				<AccessConditionAddressList<T>>::insert(_key, &access_condition_public);
-				<AccessConditionList<T>>::insert(&access_condition_public, &access_condition);
-				<KeyOf<T>>::insert(_key, &access_condition_public);
-				<DocumentPermissionsState<T>>::insert(&did, &players[1], false);
-				<FinalizedOf<T>>::insert(&access_condition_public, false);
-				<OutcomeOf<T>>::insert(&access_condition_public, false);
-				
-				Self::deposit_event(RawEvent::AccessConditionCreated(
-					access_condition_public,
-					players[0],
-					players[1],
-					_key,
-				));
-				Ok(())
+			if isPlayer1 == true {
+				Self::set_access_condition(condition_address, nonce, players[0], players[1], did)?;
 			} else {
-				let access_condition = AccessConditionOf<T> {
-					nonce: nonce,
-					players: players.clone(),
-					seqNum: 0,
-					status: AppStatus::IDLE,
-					owner: players[1].clone(),
-					grantee: players[0].clone(),
-				};
-
-				<AccessConditionAddressKey>::mutate(|key| *key += 1);
-				<AccessConditionAddressList<T>>::insert(_key, &access_condition_public);
-				<AccessConditionList<T>>::insert(&access_condition_public, &access_condition);
-				<KeyOf<T>>::insert(_key, &access_condition_public);
-				<DocumentPermissionsState<T>>::insert(&did, &players[0], false);
-				<FinalizedOf<T>>::insert(&access_condition_public, false);
-				<OutcomeOf<T>>::insert(&access_condition_public, false);
-
-				Self::deposit_event(RawEvent::AccessConditionCreated(
-					access_condition_public,
-					players[1],
-					players[0],
-					_key
-				));
-				Ok(())
+				Self::set_access_condition(condition_address, nonce, players[1], players[0], did)?;
 			}
 
+			Ok(())
 		}
 
 		pub fn intendSettle(
@@ -192,11 +141,11 @@ decl_module! {
 
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
-				None => return Err(Error<T>::InvalidConditionAddress.into())
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
 			
 			let players: Vec<T::AccountId> = access_condition.players;
-			ensure!(&who == &players[0] || &who == &palyers[1], Error::<T>::InvalidSender);
+			ensure!(&who == &players[0] || &who == &players[1], Error::<T>::InvalidSender);
 			
 			let mut encoded = transaction.appState.nonce.encode();
 			encoded.extend(transaction.appState.seqNum.encode());
@@ -207,8 +156,8 @@ decl_module! {
 			ensure!(access_condition.nonce == transaction.appState.nonce, Error::<T>::InvalidNonce);
 			ensure!(access_condition.seqNum < transaction.appState.seqNum, Error::<T>::InvalidSeqNum);
 
-			if (transaction.appState.state == 0) {
-				let new_access_condition = AccessConditionOf<T> {
+			if transaction.appState.state == 0 {
+				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
 					seqNum: transaction.seqNum,
@@ -225,9 +174,8 @@ decl_module! {
 						<system::Module<T>>::block_number(),
 					)
 				);
-				Ok(())
-			} else if (transaction.appState.state == 1) {
-				let new_access_condition = AccessConditionOf<T> {
+			} else if transaction.appState.state == 1 {
+				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
 					seqNum: transaction.seqNum,
@@ -236,7 +184,7 @@ decl_module! {
 					grantee: access_condition.grantee.clone(),
 				};
 
-				<AccessConditionList<T>>:mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
+				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
 				
 				Self::deposit_event(
 					RawEvent::SetIdle(
@@ -244,14 +192,13 @@ decl_module! {
 						<system::Module<T>>::block_number(),
 					)
 				)
-				Ok(())
 			} else {
-				let did = match Self::did_list(state) {
+				let did = match Self::did_list(transaction.appStete.state) {
 					Some(_did) => _did,
-					None => return Err(Error<T>::InvalidState.into())
+					None => return Err(Error::<T>::InvalidState.into())
 				};
 
-				let new_access_condition = AccessConditionOf<T> {
+				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
 					seqNum: transaction.seqNum,
@@ -260,7 +207,7 @@ decl_module! {
 					grantee: access_condition.grantee.clone(),
 				};
 
-				<AccessConditionAddressList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone());
+				<AccessConditionAddressList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
 				<DocumentPermissionsState<T>>::mutate((&did, &access_condition.grantee), true);
 				<FinalizedOf<T>>::mutate(&condition_address, true);
 				<OutcomeOf<T>>::mutate(&condition_address, true);
@@ -271,10 +218,8 @@ decl_module! {
 						<system::Module<T>>::block_number(),
 					)
 				);
-				
-				Ok(())
 			}
-			
+			Ok(())
 		}
 
 		pub fn getStatus(origin, condition_address: T::AccountId) -> DispatchResult {
@@ -282,20 +227,20 @@ decl_module! {
 			
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
-				None => return Err(Error<T>::InvalidConditionAddress.into())
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
 			
 			let status = access_condition.status;
 			
-			if (status == AppStatus::IDLE) {
+			if status == AppStatus::IDLE {
 				Self::deposit_event(
-					RawEvent::IDLE_STATUS(
+					RawEvent::IdleStatus(
 						condition_address, 
 						<system::Module<T>>::block_number(),
 				));
 			} else {
 				Self::deposit_event(
-					RawEvent::FINALIZED_STATUS(
+					RawEvent::FinalizedStatus(
 						condition_address,
 						<system::Module<T>>::block_number(),
 					)
@@ -310,7 +255,7 @@ decl_module! {
 			
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
-				None => return Err(Error<T>::InvalidConditionAddress.into())
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
 
 			let seq = access_condition.seqNum;
@@ -330,7 +275,7 @@ decl_module! {
 
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
-				None => return Err(Error<T>::InvalidConditionAddress.into())
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
 			
 			let owner = access_condition.owner;
@@ -350,7 +295,7 @@ decl_module! {
 			
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
-				None => return Err(Error<T>::InvalidConditionAddress.into())
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
 
 			let grantee = access_condition.grantee;
@@ -376,11 +321,11 @@ decl_module! {
 			let who = ensure_signed(origin)?;
 			
 			let isOwner: bool = T::DIDOwner::is_did_owner(&did, &who)?;
-			ensure!(isOnwer == true, Error::<T>::NotOwner);
+			ensure!(isOwner == true, Error::<T>::NotOwner);
 
 			let mut didKey: u32 = |_didKey| {
 				let mut _didKey = Self::did_key();
-				if (_didKey == 0 || _didKey == 1) {
+				if _didKey == 0 || _didKey == 1 {
 					_didKey = 2;
 					_didKey
 				} else {
@@ -394,7 +339,7 @@ decl_module! {
 			Self::deposit_event(
 				RawEvent::NewDID(
 					did,
-					key
+					didKey
 				)
 			);
 			Ok(())
@@ -405,7 +350,7 @@ decl_module! {
 
 			let key = match Self::key_of_did(&did) {
 				Some(_key) => _key,
-				None => return Err(Error<T>::NotExist.into())
+				None => return Err(Error::<T>::NotExist.into())
 			};
 
 			Self::deposit_event(
@@ -422,8 +367,8 @@ decl_module! {
 
 			let did = match Self::did_list(key) {
 				Some(_did) => _did,
-				None => return Err(Error<T>::NotExist.into())
-			}
+				None => return Err(Error::<T>::NotExist.into())
+			};
 			
 			Self::deposit_event(
 				RawEvent::DID(
@@ -446,8 +391,8 @@ decl_event!(
 		SwapPosition(AccountId, BlockNumber),
 		SetIdle(AccountId, BlockNumber),
 		IntendSettle(AccountId, BlockNumber),
-		IDLE_STATUS(AccountId, BlockNumber),
-		FINALIZED_STATUS(AccountId, BlockNumber),
+		IdleStatus(AccountId, BlockNumber),
+		FinalizedStatus(AccountId, BlockNumber),
 		SeqNum(u32, BlockNumber),
 		Owner(AccountId, BlockNumber),
 		Grantee(AccountId, BlockNumber),
@@ -456,7 +401,7 @@ decl_event!(
 		NewDID(AccountId, u32),
 		DID(AccountId),
 	}
-)
+);
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
@@ -477,9 +422,9 @@ impl<T: Trait> Module<T> {
 		msg: &[u8],
 		signers: Vec<T::AccountId>,
 	) -> DispatchResult {
-		if ((&signatures[0].verify(msg, &signers[0])) && (&signatures[1].verify(msg, &signers[1]))
-			|| ((&signatures[1].verify(msg, &signers[0]) && (&signatures[0].verify(msg, &signers[1]))))
-		) {
+		if &signatures[0].verify(msg, &signers[0]) && &signatures[1].verify(msg, &signers[1]) {
+			Ok(())
+		} else if &signatures[1].verify(msg, &signers[1]) && &signatures[0].verify(msg, &signers[0]) {
 			Ok(())
 		} else {
 			Err(Error::<T>::InvalidSignature.into())
@@ -494,5 +439,43 @@ impl<T: Trait> Module<T> {
 		sr25519::Pair::from_string(&format!("//{}", s), None)
 			.expect("static values are valid; qed")
 			.pubic()
+	}
+
+	pub fn create_condition_address() -> sr25519::Public {
+		let _key: u32 = <AccessConditionAddressKey>::get();
+		let key_string: String = _key.to_string();
+		let access_condition_string: String = "AccessCondition" + key_string;
+		let access_condition_pair: sr25519::Pair = Self::account_pair(access_condition_string);
+		let access_condition_public: sr25519::Public = Self::account_key(access_condition_pair);
+		access_condition_public
+	}
+
+	pub fn set_access_condition(
+		condition_address: T::AccountId, 
+		nonce: u32,
+		owner: T::AccountId,
+		grantee: T::AccountId,
+		did: T::AccountId,
+	) -> DispatchResult {
+		let players: Vec<T::AccountId> = vec![owner.clone(), grantee.clone()];
+		
+		let access_condition = AccessConditionOf::<T> {
+			nonce: nonce,
+			players: players,
+			seqNum: 0,
+			status: AppStatus::IDLE,
+			owner: owner.clone(),
+			grantee: grantee.clone(),
+		};
+		
+		let _key: u32 = <AccessConditionAddressKey>::get();
+		<AccessConditionAddressList<T>>::insert(_key, &condition_address);
+		<AccessConditionList<T>>::insert(&condition_address, &access_condition);
+		<KeyOfDID<T>>::insert(_key, &did);
+		<DocumentPermissionsState<T>>::insert(&did, &grantee, false);
+		<FinalizedOf<T>>::insert(&condition_address, false);
+		<OutcomeOf<T>>::insert(&condition_address, false);
+
+		Ok(())
 	}
 }
