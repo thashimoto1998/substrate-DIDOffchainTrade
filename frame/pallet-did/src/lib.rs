@@ -114,11 +114,6 @@ pub trait Trait: system::Trait + timestamp::Trait {
     type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
 
-pub trait DIDOwner<AccountId> {
-    fn is_did_owner(identity: &AccountId, actual_owner: &AccountId) -> bool;
-    fn did_identity_owner(identity: &AccountId) -> AccountId;
-}
-
 decl_storage! {
     trait Store for Module<T: Trait> as DID {
         /// Identity delegates stored by type.
@@ -360,6 +355,15 @@ impl<T: Trait> Module<T> {
         owner
     }
 
+    pub fn boolean_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
+        let owner = Self::identity_owner(identity);
+        if owner == *actual_owner {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /// Validates if a delegate belongs to an identity and it has not expired.
     pub fn valid_delegate(
         identity: &T::AccountId,
@@ -578,24 +582,6 @@ impl<T: Trait> Module<T> {
     }
 }
 
-impl<T: Trait> DIDOwner<T::AccountId> for Module<T> {
-    fn is_did_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
-        let owner = Self::did_identity_owner(identity);
-        if owner == *actual_owner {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    fn did_identity_owner(identity: &T::AccountId) -> T::AccountId {
-        let owner = match Self::owner_of(identity) {
-            Some(id) => id,
-            None => identity.clone(),
-        };
-        owner
-    }
-}
 
 #[cfg(test)]
 mod tests {
