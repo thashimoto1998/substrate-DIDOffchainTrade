@@ -1,17 +1,19 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use did::{DIDOwner};
+use pallet_did::{self as did};
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error, 
 	dispatch::DispatchResult, ensure, 
 	storage::{StorageMap, StorageDoubleMap},
 };
-use sp_runtime::{KeyTypeId};
+use sp_runtime::{MultiSignature};
 use sp_runtime::traits::{Hash, IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
-use system::ensure_signed;
-use sp_core::{sr25519, Pair, RuntimeDebug}; 
+use system::{self as system, ensure_signed};
+use sp_core::{RuntimeDebug};
+use sp_core::crypto::KeyTypeId;
+
 
 #[cfg(test)]
 mod mock;
@@ -59,13 +61,11 @@ pub struct StateProof<Signature> {
 
 
 /// The pallet's configuration trait.
-pub trait Trait: system::Trait + timestamp::Trait {
+pub trait Trait: system::Trait + timestamp::Trait + did::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-	type Public: IdentifyAccount<AccountId = Self::AccountId>;
-	type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
-	type DIDOwner: DIDOwner<AccountId>; 
+	//type Public: IdentifyAccount<AccountId = Self::AccountId>;
+	//type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
-
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
@@ -102,8 +102,8 @@ decl_module! {
 
 			ensure!(players.len() == 2, Error::<T>::InvalidPlayerLength);
 
-			let isPlayer1: bool = T::DIDOwner::is_did_owner(&did, &players[0])?;
-			let isPlayer2: bool = T::DIDOwner::is_did_owner(&did, &players[1])?;
+			let isPlayer1: bool = <did::Module<T>>::boolean_owner(&did, &players[0]);
+			let isPlayer2: bool = <did::Module<T>>::boolean_owner(&did, &players[1]);
 			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
 			// Create new Address of Access Condition
@@ -320,7 +320,7 @@ decl_module! {
 		pub fn setNewDID(origin, did: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			
-			let isOwner: bool = T::DIDOwner::is_did_owner(&did, &who)?;
+			let isOwner: bool = <did::Module<T>>::boolean_owner(&did, &who);
 			ensure!(isOwner == true, Error::<T>::NotOwner);
 
 			let mut didKey: u32 = |_didKey| {
