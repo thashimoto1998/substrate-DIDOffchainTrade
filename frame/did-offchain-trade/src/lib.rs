@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use pallet_did::{self as did};
+use pallet_did::{BooleanOwner};
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error, 
 	dispatch::DispatchResult, ensure, 
@@ -56,6 +56,7 @@ pub trait Trait: frame_system::Trait  {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	//type Public: IdentifyAccount<AccountId = Self::AccountId>;
 	//type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
+	type BooleanOwner: BooleanOwner<Self::AccountId>;
 }
 
 decl_storage! {
@@ -91,23 +92,19 @@ decl_module! {
 			let _ = ensure_signed(origin)?;
 
 			ensure!(players.len() == 2, Error::<T>::InvalidPlayerLength);
-			let isPlayer1: bool = <did::Module<T>>::boolean_owner(&did, &players[0]);
-			let isPlayer2: bool = <did::Module<T>>::boolean_owner(&did, &players[1]);
+			let isPlayer1: bool = T::BooleanOwner::boolean_owner(&did, &players[0]);
+			let isPlayer2: bool = T::BooleanOwner::boolean_owner(&did, &players[1]);
 			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
 			ensure!(Self::is_address(&condition_address), Error::<T>::ExistAddress);
 			<AccessConditionAddressList<T>>::append(vec![condition_address.clone()])?;
 
 			// TODO: Refactoring and default <DIDKey> is 2.
-			let mut didKey: u32 = |_didKey| {
-				let mut _didKey = Self::did_key();
-				if _didKey == 0 || _didKey == 1 {
-					_didKey = 2;
-					_didKey
-				} else {
-					_didKey
-				}
-			};
+			
+			let mut didKey = Self::did_key();
+			if didKey == 0 || didKey == 1 {
+				didKey = 2;
+			} 
 			<DIDList<T>>::insert(didKey, &did);
 			<KeyOfDID<T>>::insert(&did, didKey);
 			<DIDKey>::mutate(|key| *key += 1);
@@ -149,7 +146,7 @@ decl_module! {
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
-					seqNum: transaction.seqNum,
+					seqNum: transaction.appState.seqNum,
 					status: AppStatus::IDLE,
 					owner: access_condition.grantee.clone(),
 					grantee: access_condition.owner.clone(),
@@ -167,7 +164,7 @@ decl_module! {
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
-					seqNum: transaction.seqNum,
+					seqNum: transaction.appState.seqNum,
 					status: AppStatus::IDLE,
 					owner: access_condition.owner.clone(),
 					grantee: access_condition.grantee.clone(),
@@ -182,7 +179,7 @@ decl_module! {
 					)
 				)
 			} else {
-				let did = match Self::did_list(transaction.appStete.state) {
+				let did = match Self::did_list(transaction.appState.state) {
 					Some(_did) => _did,
 					None => return Err(Error::<T>::InvalidState.into())
 				};
@@ -190,7 +187,7 @@ decl_module! {
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
-					seqNum: transaction.seqNum,
+					seqNum: transaction.appState.seqNum,
 					status: AppStatus::FINALIZED,
 					owner: access_condition.owner.clone(),
 					grantee: access_condition.grantee.clone(),
@@ -309,18 +306,13 @@ decl_module! {
 		pub fn setNewDID(origin, did: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			
-			let isOwner: bool = <did::Module<T>>::boolean_owner(&did, &who);
+			let isOwner: bool = T::BooleanOwner::boolean_owner(&did, &who);
 			ensure!(isOwner == true, Error::<T>::NotOwner);
 
-			let mut didKey: u32 = |_didKey| {
-				let mut _didKey = Self::did_key();
-				if _didKey == 0 || _didKey == 1 {
-					_didKey = 2;
-					_didKey
-				} else {
-					_didKey
-				}
-			};
+			let mut didKey = Self::did_key();
+			if didKey == 0 || didKey == 1{
+				didKey = 2;
+			}
 			<DIDList<T>>::insert(didKey, &did);
 			<KeyOfDID<T>>::insert(&did, didKey);
 			<DIDKey>::mutate(|key| *key += 1);
@@ -388,6 +380,7 @@ decl_event!(
 		BooleanOutcome(bool),
 		AccessPermission(bool),
 		NewDID(AccountId, u32),
+		DIDKey(u32),
 		DID(AccountId),
 	}
 );
@@ -397,6 +390,7 @@ decl_error! {
 		NotOwner,
 		InvalidPlayerLength,
 		InvalidSender,
+		InvalidState,
 		InvalidNonce,
 		InvalidSeqNum,
 		InvalidSignature,
