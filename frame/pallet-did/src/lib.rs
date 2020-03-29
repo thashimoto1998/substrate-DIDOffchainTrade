@@ -114,6 +114,10 @@ pub trait Trait: system::Trait + timestamp::Trait {
     type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
 
+pub trait BooleanOwner<AccountId> {
+    fn boolean_owner(identity: &AccountId, actual_owner: &AccountId) -> bool;
+}
+
 decl_storage! {
     trait Store for Module<T: Trait> as DID {
         /// Identity delegates stored by type.
@@ -355,15 +359,6 @@ impl<T: Trait> Module<T> {
         owner
     }
 
-    pub fn boolean_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
-        let owner = Self::identity_owner(identity);
-        if owner == *actual_owner {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     /// Validates if a delegate belongs to an identity and it has not expired.
     pub fn valid_delegate(
         identity: &T::AccountId,
@@ -579,6 +574,17 @@ impl<T: Trait> Module<T> {
             Self::reset_attribute(who, &transaction.identity, &transaction.name)?;
         }
         Ok(())
+    }
+}
+
+impl<T: Trait> BooleanOwner<T::AccountId> for Module<T> {
+    fn boolean_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
+        let owner = Self::identity_owner(identity);
+        if owner == *actual_owner {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
