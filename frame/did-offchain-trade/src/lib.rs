@@ -380,7 +380,7 @@ decl_event!(
 		BooleanOutcome(bool),
 		AccessPermission(bool),
 		NewDID(AccountId, u32),
-		DIDKey(AccountId),
+		DIDKey(u32),
 		DID(AccountId),
 	}
 );
