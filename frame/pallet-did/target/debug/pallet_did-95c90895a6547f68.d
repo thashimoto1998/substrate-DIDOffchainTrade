@@ -1,0 +1,1 @@
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/target/debug/pallet_did-95c90895a6547f68: /Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/src/lib.rs

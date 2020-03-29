@@ -17,8 +17,9 @@ std = [
     'sp-std/std',
     'timestamp/std',
     'safe-mix/std',
-    'system/std',
-    'pallet-did/std'
+    'frame-system/std',
+    'pallet-did/std',
+    'node-primitives/std'
 ]
 
 [dependencies.serde]
@@ -66,7 +67,7 @@ git = 'https://github.com/paritytech/substrate.git'
 rev = '013c1ee167354a08283fb69915fda56a62fee943'
 version = '2.0.0-alpha.3'
 
-[dependencies.system]
+[dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'frame-system'
@@ -84,3 +85,10 @@ git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-timestamp'
 rev = '3e651110aa06aa835790df63410a29676243fc54'
 version = '2.0.0'
+
+[dependencies.node-primitives]
+default_features = false
+git = 'https://github.com/paritytech/substrate.git'
+package = 'node-primitives'
+rev = '013c1ee167354a08283fb69915fda56a62fee943'
+version = '2.0.0-alpha.3'

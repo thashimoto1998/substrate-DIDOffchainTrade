@@ -1,0 +1,8 @@
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/target/debug/deps/libsp_api_proc_macro-72197963610521ba.dylib: /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/lib.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/impl_runtime_apis.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/decl_runtime_apis.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/utils.rs
+
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/target/debug/deps/sp_api_proc_macro-72197963610521ba.d: /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/lib.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/impl_runtime_apis.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/decl_runtime_apis.rs /Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/utils.rs
+
+/Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/lib.rs:
+/Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/impl_runtime_apis.rs:
+/Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/decl_runtime_apis.rs:
+/Users/hashimototatsuki/.cargo/git/checkouts/substrate-7e08433d4c370a21/3e65111/primitives/api/proc-macro/src/utils.rs:

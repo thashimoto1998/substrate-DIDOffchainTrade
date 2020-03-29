@@ -7,13 +7,11 @@ use frame_support::{
 	dispatch::DispatchResult, ensure, 
 	storage::{StorageMap, StorageDoubleMap},
 };
-use sp_runtime::{MultiSignature};
 use sp_runtime::traits::{Hash, IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
-use system::{self as system, ensure_signed};
-use sp_core::{RuntimeDebug};
-use sp_core::crypto::KeyTypeId;
-
+use frame_system::{self as system, ensure_signed};
+use sp_core::{RuntimeDebug, sr25519, Pair};
+use node_primitives::{Signature};
 
 #[cfg(test)]
 mod mock;
@@ -21,14 +19,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"offchain-trade");
-pub mod crypto {
-	use super::KEY_TYPE;
-	use sp_runtime::app_crypto::{app_crypto, sr25519};
-	app_crypto!(sr25519, KEY_TYPE);
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AccessCondition<AccountId> {
 	pub nonce: u32,
 	pub players: Vec<AccountId>,
@@ -38,7 +29,7 @@ pub struct AccessCondition<AccountId> {
 	pub grantee: AccountId,
 }
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Encode, Decode, RuntimeDebug)]
 pub enum AppStatus {
 	IDLE,
 	FINALIZED,
@@ -61,7 +52,7 @@ pub struct StateProof<Signature> {
 
 
 /// The pallet's configuration trait.
-pub trait Trait: system::Trait + timestamp::Trait + did::Trait {
+pub trait Trait: frame_system::Trait  {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	//type Public: IdentifyAccount<AccountId = Self::AccountId>;
 	//type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
@@ -69,11 +60,9 @@ pub trait Trait: system::Trait + timestamp::Trait + did::Trait {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
-		pub AccessConditionAddressKey get(fn key): u32;
-		pub AccessConditionAddressList get(fn key_of): 
-			map hasher(blake2_256) u32 => Option<T::AccountId>;
-		pub AccessConditionList get(condition_list): 
-			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
+		pub AccessConditionAddressList get(fn condition_address): Vec<T::AccountId>;
+		pub AccessConditionList get(fn condition_list): 
+			map hasher(blake2_256) <T as frame_system::Trait>::AccountId => Option<AccessConditionOf<T>>;
 		pub DIDKey get(fn did_key): u32;
 		pub DIDList get(fn did_list): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
@@ -97,18 +86,18 @@ decl_module! {
 			players: Vec<T::AccountId>, 
 			nonce: u32,
 			did: T::AccountId,
+			condition_address: T::AccountId
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 
 			ensure!(players.len() == 2, Error::<T>::InvalidPlayerLength);
-
 			let isPlayer1: bool = <did::Module<T>>::boolean_owner(&did, &players[0]);
 			let isPlayer2: bool = <did::Module<T>>::boolean_owner(&did, &players[1]);
 			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
-			// Create new Address of Access Condition
-			let condition_address = Self::create_condition_address();
-		
+			ensure!(Self::is_address(&condition_address), Error::<T>::ExistAddress);
+			<AccessConditionAddressList<T>>::append(vec![condition_address.clone()])?;
+
 			// TODO: Refactoring and default <DIDKey> is 2.
 			let mut didKey: u32 = |_didKey| {
 				let mut _didKey = Self::did_key();
@@ -135,7 +124,7 @@ decl_module! {
 		pub fn intendSettle(
 			origin, 
 			condition_address: T::AccountId,
-			transaction: StateProof<T::Signature>,
+			transaction: StateProof<Signature>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -207,7 +196,7 @@ decl_module! {
 					grantee: access_condition.grantee.clone(),
 				};
 
-				<AccessConditionAddressList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
+				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
 				<DocumentPermissionsState<T>>::mutate((&did, &access_condition.grantee), true);
 				<FinalizedOf<T>>::mutate(&condition_address, true);
 				<OutcomeOf<T>>::mutate(&condition_address, true);
@@ -384,8 +373,8 @@ decl_module! {
 decl_event!(
 	pub enum Event<T>
 	where
-	<T as system::Trait>::AccountId,
-	<T as system::Trait>::BlockNumber,
+	<T as frame_system::Trait>::AccountId,
+	<T as frame_system::Trait>::BlockNumber,
 	{
 		AccessConditionCreated(AccountId, AccountId, AccountId, u32),
 		SwapPosition(AccountId, BlockNumber),
@@ -413,12 +402,13 @@ decl_error! {
 		InvalidSignature,
 		InvalidConditionAddress,
 		NotExist,
+		ExistAddress,
 	}
 }
 
 impl<T: Trait> Module<T> {
 	pub fn valid_signers(
-		signatures: Vec<T::Signature>,
+		signatures: Vec<Signature>,
 		msg: &[u8],
 		signers: Vec<T::AccountId>,
 	) -> DispatchResult {
@@ -431,23 +421,8 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	pub fn account_pair(s: &str) -> sr25519::Pair {
-		sr25519::Pair::from_string(&format!("//{}", s), None)
-			.expect("static values are valid; qed")
-	}
-	pub fn account_key(s: &str) -> sr25519::Public {
-		sr25519::Pair::from_string(&format!("//{}", s), None)
-			.expect("static values are valid; qed")
-			.pubic()
-	}
-
-	pub fn create_condition_address() -> sr25519::Public {
-		let _key: u32 = <AccessConditionAddressKey>::get();
-		let key_string: String = _key.to_string();
-		let access_condition_string: String = "AccessCondition" + key_string;
-		let access_condition_pair: sr25519::Pair = Self::account_pair(access_condition_string);
-		let access_condition_public: sr25519::Public = Self::account_key(access_condition_pair);
-		access_condition_public
+	pub fn is_address(address: &T::AccountId) -> bool {
+		<AccessConditionAddressList<T>>::get().contains(address)
 	}
 
 	pub fn set_access_condition(
@@ -468,8 +443,7 @@ impl<T: Trait> Module<T> {
 			grantee: grantee.clone(),
 		};
 		
-		let _key: u32 = <AccessConditionAddressKey>::get();
-		<AccessConditionAddressList<T>>::insert(_key, &condition_address);
+		let _key: u32 = Self::did_key();
 		<AccessConditionList<T>>::insert(&condition_address, &access_condition);
 		<KeyOfDID<T>>::insert(_key, &did);
 		<DocumentPermissionsState<T>>::insert(&did, &grantee, false);
