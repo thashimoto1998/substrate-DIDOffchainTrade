@@ -761,6 +761,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "node-primitives"
+version = "2.0.0-alpha.3"
+source = "git+https://github.com/paritytech/substrate.git?rev=013c1ee167354a08283fb69915fda56a62fee943#013c1ee167354a08283fb69915fda56a62fee943"
+dependencies = [
+ "sp-core 2.0.0-alpha.3",
+ "sp-runtime 2.0.0-alpha.3",
+]
+
+[[package]]
 name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -859,6 +868,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support 2.0.0-alpha.3",
  "frame-system 2.0.0-alpha.3",
+ "node-primitives",
  "pallet-did",
  "pallet-timestamp",
  "parity-scale-codec",
