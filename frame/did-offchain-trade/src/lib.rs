@@ -67,11 +67,15 @@ decl_storage! {
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
 		pub AccessConditionList get(fn condition_list): 
 			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
+		pub KeyOfCondition get(fn key_of_condition):
+			map hasher(blake2_256) T::AccountId => Option<u32>;
+		
 		pub DIDKey get(fn did_key): u32;
 		pub DIDList get(fn did_list): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
-		pub KeyOfDID get (fn key_of_did): 
+		pub KeyOfDID get(fn key_of_did): 
 			map hasher(blake2_256) T::AccountId => Option<u32>;
+		
 		pub DocumentPermissionsState get(fn permission):
 			map hasher(blake2_256) T::AccountId => Option<T::AccountId>;
 	}
@@ -100,6 +104,7 @@ decl_module! {
 			let condition_key = Self::condition_key();
 			<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
 			<ConditionKey>::mutate(|key| *key += 1);
+			<KeyOfCondition<T>>::insert(&condition_address, condition_key);
 
 			// TODO: Refactoring and default <DIDKey> is 2.
 			let mut did_key = Self::did_key();
@@ -107,13 +112,13 @@ decl_module! {
 				did_key = 2;
 			} 
 			<DIDList<T>>::insert(did_key, &did);
-			<KeyOfDID<T>>::insert(&did, did_key);
 			<DIDKey>::mutate(|key| *key += 1);
+			<KeyOfDID<T>>::insert(&did, did_key);
 
 			if is_player1 == true {
-				Self::set_access_condition(condition_address, nonce, players[0].clone(), players[1].clone())?;
+				Self::set_access_condition(condition_address, nonce, players[0].clone(), players[1].clone(), condition_key, did_key)?;
 			} else {
-				Self::set_access_condition(condition_address, nonce, players[1].clone(), players[0].clone())?;
+				Self::set_access_condition(condition_address, nonce, players[1].clone(), players[0].clone(), condition_key, did_key)?;
 			}
 
 			Ok(())
@@ -161,7 +166,6 @@ decl_module! {
 				};
 				
 				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
-				
 				Self::deposit_event(
 					RawEvent::SwapPosition(
 						condition_address,
@@ -187,7 +191,7 @@ decl_module! {
 						condition_address,
 						<frame_system::Module<T>>::block_number(),
 					)
-				)
+				);
 			} else {
 				let did = match Self::did_list(transaction.app_state.state[1]) {
 					Some(_did) => _did,
@@ -323,8 +327,8 @@ decl_module! {
 				did_key = 2;
 			}
 			<DIDList<T>>::insert(did_key, &did);
-			<KeyOfDID<T>>::insert(&did, did_key);
 			<DIDKey>::mutate(|key| *key += 1);
+			<KeyOfDID<T>>::insert(&did, did_key);
 
 			Self::deposit_event(
 				RawEvent::NewDID(
@@ -368,6 +372,40 @@ decl_module! {
 
 			Ok(())
 		}
+
+		pub fn access_condition_address_key(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _who = ensure_signed(origin)?;
+
+			let key = match Self::key_of_condition(&condition_address) {
+				Some(_key) => _key,
+				None => return Err(Error::<T>::NotExist.into())
+			};
+
+			Self::deposit_event(
+				RawEvent::ConditionAddressKey(
+					key
+				)
+			);
+
+			Ok(())
+		}
+
+		pub fn access_condition_address(origin, condition_key: u32) -> DispatchResult {
+			let _who = ensure_signed(origin)?;
+
+			let condition_address = match Self::condition_address(condition_key) {
+				Some(_address) => _address,
+				None => return Err(Error::<T>::NotExist.into())
+			};
+
+			Self::deposit_event(
+				RawEvent::ConditionAddress(
+					condition_address
+				)
+			);
+
+			Ok(())
+		}
 	}
 }
 
@@ -377,7 +415,7 @@ decl_event!(
 	<T as frame_system::Trait>::AccountId,
 	<T as frame_system::Trait>::BlockNumber,
 	{
-		AccessConditionCreated(AccountId, AccountId, AccountId, u32),
+		AccessConditionCreated(AccountId, AccountId, AccountId, u32, u32),
 		SwapPosition(AccountId, BlockNumber),
 		SetIdle(AccountId, BlockNumber),
 		IntendSettle(AccountId, BlockNumber),
@@ -391,6 +429,8 @@ decl_event!(
 		NewDID(AccountId, u32),
 		DIDKey(u32),
 		DID(AccountId),
+		ConditionAddressKey(u32),
+		ConditionAddress(AccountId),
 	}
 );
 
@@ -431,6 +471,8 @@ impl<T: Trait> Module<T> {
 		nonce: u32,
 		owner: T::AccountId,
 		grantee: T::AccountId,
+		condition_key: u32,
+		did_key: u32,
 	) -> DispatchResult {
 		let players: Vec<T::AccountId> = vec![owner.clone(), grantee.clone()];
 		
@@ -446,6 +488,15 @@ impl<T: Trait> Module<T> {
 		
 		<AccessConditionList<T>>::insert(&condition_address, &access_condition);
 
+		Self::deposit_event(
+			RawEvent::AccessConditionCreated(
+				condition_address,
+				owner,
+				grantee,
+				condition_key,
+				did_key,
+			)
+		);
 		Ok(())
 	}
 }
