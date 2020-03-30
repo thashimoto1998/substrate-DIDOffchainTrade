@@ -65,10 +65,10 @@ decl_storage! {
 		pub ConditionKey get(fn condition_key): u32;
 		pub AccessConditionAddressList get(fn condition_address): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
-		pub AccessConditionList get(fn condition_list): 
-			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
 		pub KeyOfCondition get(fn key_of_condition):
 			map hasher(blake2_256) T::AccountId => Option<u32>;
+		pub AccessConditionList get(fn condition_list): 
+			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
 		
 		pub DIDKey get(fn did_key): u32;
 		pub DIDList get(fn did_list): 
@@ -340,7 +340,7 @@ decl_module! {
 		}
 
 		pub fn get_did_key(origin, did: T::AccountId) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 
 			let key = match Self::key_of_did(&did) {
 				Some(_key) => _key,
@@ -357,7 +357,7 @@ decl_module! {
 		}
 
 		pub fn get_did(origin, key: u32) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 
 			let _did = match Self::did_list(key) {
 				Some(_did) => _did,
@@ -374,7 +374,7 @@ decl_module! {
 		}
 
 		pub fn access_condition_address_key(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 
 			let key = match Self::key_of_condition(&condition_address) {
 				Some(_key) => _key,
@@ -391,7 +391,7 @@ decl_module! {
 		}
 
 		pub fn access_condition_address(origin, condition_key: u32) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 
 			let condition_address = match Self::condition_address(condition_key) {
 				Some(_address) => _address,
@@ -466,7 +466,7 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	pub fn set_access_condition(
+	fn set_access_condition(
 		condition_address: T::AccountId, 
 		nonce: u32,
 		owner: T::AccountId,
