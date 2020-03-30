@@ -10,7 +10,7 @@ use frame_support::{
 use sp_runtime::traits::{Hash, IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
 use frame_system::{self as system, ensure_signed};
-use sp_core::{RuntimeDebug, sr25519, Pair};
+use sp_core::{RuntimeDebug};
 use node_primitives::{Signature};
 
 #[cfg(test)]
@@ -25,6 +25,7 @@ pub struct AccessCondition<AccountId> {
 	pub players: Vec<AccountId>,
 	pub seqNum: u32,
 	pub status: AppStatus,
+	pub outcome: bool,
 	pub owner: AccountId,
 	pub grantee: AccountId,
 }
@@ -41,7 +42,7 @@ type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 pub struct AppState {
 	pub nonce: u32,
 	pub seqNum: u32,
-	pub state: u32,
+	pub state: Vec<u32>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
@@ -61,18 +62,18 @@ pub trait Trait: frame_system::Trait  {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
-		pub AccessConditionAddressList get(fn condition_address): Vec<T::AccountId>;
+		pub ConditionKey get(fn condition_key): u32;
+		pub AccessConditionAddressList get(fn condition_address): 
+			map hasher(blake2_256) u32 => Option<T::AccountId>;
 		pub AccessConditionList get(fn condition_list): 
-			map hasher(blake2_256) <T as frame_system::Trait>::AccountId => Option<AccessConditionOf<T>>;
+			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
 		pub DIDKey get(fn did_key): u32;
 		pub DIDList get(fn did_list): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
 		pub KeyOfDID get (fn key_of_did): 
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		pub DocumentPermissionsState get(fn permission):
-			double_map hasher(blake2_256) T::AccountId, hasher(blake2_256) T::AccountId => bool;
-		pub FinalizedOf: map hasher(blake2_256) T::AccountId => bool;
-		pub OutcomeOf: map hasher(blake2_256) T::AccountId => bool;
+			map hasher(blake2_256) T::AccountId => Option<T::AccountId>;
 	}
 }
 
@@ -96,11 +97,11 @@ decl_module! {
 			let isPlayer2: bool = T::BooleanOwner::boolean_owner(&did, &players[1]);
 			ensure!(isPlayer1 == true || isPlayer2 == true, Error::<T>::NotOwner);
 
-			ensure!(Self::is_address(&condition_address), Error::<T>::ExistAddress);
-			<AccessConditionAddressList<T>>::append(vec![condition_address.clone()])?;
+			let conditionKey = Self::condition_key();
+			<AccessConditionAddressList<T>>::insert(conditionKey, &condition_address);
+			<ConditionKey>::mutate(|key| *key += 1);
 
 			// TODO: Refactoring and default <DIDKey> is 2.
-			
 			let mut didKey = Self::did_key();
 			if didKey == 0 || didKey == 1 {
 				didKey = 2;
@@ -120,11 +121,16 @@ decl_module! {
 
 		pub fn intendSettle(
 			origin, 
-			condition_address: T::AccountId,
 			transaction: StateProof<Signature>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+			ensure!(transaction.appState.state.len() == 2, Error::<T>::InvalidState);
+			let condition_address = match Self::condition_address(transaction.appState.state[0]) {
+				Some(_address) => _address,
+				None => return Err(Error::<T>::InvalidState.into())
+			};
+			
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
 				None => return Err(Error::<T>::InvalidConditionAddress.into())
@@ -139,15 +145,16 @@ decl_module! {
 
 			Self::valid_signers(transaction.sigs, encoded, players)?;
 
-			ensure!(access_condition.nonce == transaction.appState.nonce, Error::<T>::InvalidNonce);
-			ensure!(access_condition.seqNum < transaction.appState.seqNum, Error::<T>::InvalidSeqNum);
+			ensure!(access_condition.nonce == transaction.appState.nonce, Error::<T>::InvalidNonce.into());
+			ensure!(access_condition.seqNum < transaction.appState.seqNum, Error::<T>::InvalidSeqNum.into());
 
-			if transaction.appState.state == 0 {
+			if transaction.appState.state[1] == 0 {
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
 					seqNum: transaction.appState.seqNum,
 					status: AppStatus::IDLE,
+					outcome: false,
 					owner: access_condition.grantee.clone(),
 					grantee: access_condition.owner.clone(),
 				};
@@ -157,15 +164,16 @@ decl_module! {
 				Self::deposit_event(
 					RawEvent::SwapPosition(
 						condition_address,
-						<system::Module<T>>::block_number(),
+						<frame_system::Module<T>>::block_number(),
 					)
 				);
-			} else if transaction.appState.state == 1 {
+			} else if transaction.appState.state[1] == 1 {
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
 					seqNum: transaction.appState.seqNum,
 					status: AppStatus::IDLE,
+					outcome: false,
 					owner: access_condition.owner.clone(),
 					grantee: access_condition.grantee.clone(),
 				};
@@ -175,11 +183,11 @@ decl_module! {
 				Self::deposit_event(
 					RawEvent::SetIdle(
 						condition_address,
-						<system::Module<T>>::block_number(),
+						<frame_system::Module<T>>::block_number(),
 					)
 				)
 			} else {
-				let did = match Self::did_list(transaction.appState.state) {
+				let did = match Self::did_list(transaction.appState.state[1]) {
 					Some(_did) => _did,
 					None => return Err(Error::<T>::InvalidState.into())
 				};
@@ -189,19 +197,18 @@ decl_module! {
 					players: access_condition.players.clone(),
 					seqNum: transaction.appState.seqNum,
 					status: AppStatus::FINALIZED,
+					outcome: true,
 					owner: access_condition.owner.clone(),
 					grantee: access_condition.grantee.clone(),
 				};
 
 				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
-				<DocumentPermissionsState<T>>::mutate((&did, &access_condition.grantee), true);
-				<FinalizedOf<T>>::mutate(&condition_address, true);
-				<OutcomeOf<T>>::mutate(&condition_address, true);
-				
+				<DocumentPermissionsState<T>>::insert(&did, &access_condition.grantee);
+			
 				Self::deposit_event(
 					RawEvent::IntendSettle(
 						condition_address,
-						<system::Module<T>>::block_number(),
+						<frame_system::Module<T>>::block_number(),
 					)
 				);
 			}
@@ -222,13 +229,13 @@ decl_module! {
 				Self::deposit_event(
 					RawEvent::IdleStatus(
 						condition_address, 
-						<system::Module<T>>::block_number(),
+						<frame_system::Module<T>>::block_number(),
 				));
 			} else {
 				Self::deposit_event(
 					RawEvent::FinalizedStatus(
 						condition_address,
-						<system::Module<T>>::block_number(),
+						<frame_system::Module<T>>::block_number(),
 					)
 				);
 			}
@@ -249,7 +256,7 @@ decl_module! {
 			Self::deposit_event(
 				RawEvent::SeqNum(
 					seq,
-					<system::Module<T>>::block_number(),
+					<frame_system::Module<T>>::block_number(),
 				)
 			);
 			
@@ -269,7 +276,7 @@ decl_module! {
 			Self::deposit_event(
 				RawEvent::Owner(
 					owner,
-					<system::Module<T>>::block_number(),
+					<frame_system::Module<T>>::block_number(),
 				)
 			);
 			
@@ -289,7 +296,7 @@ decl_module! {
 			Self::deposit_event(
 				RawEvent::Grantee(
 					grantee,
-					<system::Module<T>>::block_number(),
+					<frame_system::Module<T>>::block_number(),
 				)
 			);
 			
@@ -415,10 +422,6 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	pub fn is_address(address: &T::AccountId) -> bool {
-		<AccessConditionAddressList<T>>::get().contains(address)
-	}
-
 	pub fn set_access_condition(
 		condition_address: T::AccountId, 
 		nonce: u32,
@@ -433,16 +436,12 @@ impl<T: Trait> Module<T> {
 			players: players,
 			seqNum: 0,
 			status: AppStatus::IDLE,
+			outcome: false,
 			owner: owner.clone(),
 			grantee: grantee.clone(),
 		};
 		
-		let _key: u32 = Self::did_key();
 		<AccessConditionList<T>>::insert(&condition_address, &access_condition);
-		<KeyOfDID<T>>::insert(_key, &did);
-		<DocumentPermissionsState<T>>::insert(&did, &grantee, false);
-		<FinalizedOf<T>>::insert(&condition_address, false);
-		<OutcomeOf<T>>::insert(&condition_address, false);
 
 		Ok(())
 	}
