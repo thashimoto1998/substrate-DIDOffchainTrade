@@ -11,7 +11,7 @@ use sp_runtime::traits::{IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
 use frame_system::{self as system, ensure_signed};
 use sp_core::{RuntimeDebug};
-//use node_primitives::{Signature};
+
 
 #[cfg(test)]
 mod mock;
@@ -60,6 +60,15 @@ pub trait Trait: frame_system::Trait  {
 	type BooleanOwner: BooleanOwner<Self::AccountId>;
 }
 
+pub trait SingleSessionBooleanOutcome<AccountId> {
+	fn is_finalized(condition_address: &AccountId) -> bool;
+	fn get_outcome(condition_address: &AccountId) -> bool;
+}
+
+pub trait PaymentOutcome<AccountId> {
+	fn check_permissions(identity: AccountId, grantee: AccountId) -> bool;
+}
+
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
 		pub ConditionKey get(fn condition_key): u32;
@@ -76,7 +85,7 @@ decl_storage! {
 		pub KeyOfDID get(fn key_of_did): 
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		
-		pub DocumentPermissionsState get(fn permission):
+		pub DocumentPermissionsStates get(fn permission):
 			map hasher(blake2_256) T::AccountId => Option<T::AccountId>;
 	}
 }
@@ -209,7 +218,7 @@ decl_module! {
 				};
 
 				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
-				<DocumentPermissionsState<T>>::insert(&did, &access_condition.grantee);
+				<DocumentPermissionsStates<T>>::insert(&did, &access_condition.grantee);
 			
 				Self::deposit_event(
 					RawEvent::IntendSettle(
@@ -498,5 +507,52 @@ impl<T: Trait> Module<T> {
 			)
 		);
 		Ok(())
+	}
+}
+
+impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
+	fn is_finalized(condition_address: &T::AccountId) -> bool {
+		let access_condition = match Self::condition_list(condition_address) {
+			Some(_condition) => _condition,
+			None => return false
+		};
+
+		let status = access_condition.status;
+
+		if status == AppStatus::FINALIZED {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	fn get_outcome(condition_address: &T::AccountId) -> bool {
+		let access_condition = match Self::condition_list(condition_address) {
+			Some(_condition) => _condition,
+			None => return false
+		};
+
+		let outcome = access_condition.outcome;
+
+		if outcome == true {
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+
+impl<T: Trait> PaymentOutcome<T::AccountId> for Module<T> {
+	fn check_permissions(identity: T::AccountId, grantee: T::AccountId) -> bool {
+		let _grantee = match Self::permission(identity) {
+			Some(_grantee) => _grantee,
+			None => return false
+		};
+
+		if grantee == _grantee {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
