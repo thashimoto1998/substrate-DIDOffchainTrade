@@ -13,6 +13,7 @@ use frame_system::{self, EventRecord, Phase};
 use sp_core::{sr25519, Pair, H256};
 use pallet_balances;
 
+
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
@@ -43,7 +44,6 @@ impl system::Trait for Test {
 	type Version = ();
 	type ModuleToIndex = ();
 	type AccountData = pallet_balances::AccountData<u64>;
-	//type MigrateAccount = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 }
@@ -95,28 +95,96 @@ pub fn account_key(s: &str) -> sr25519::Public {
 
 #[test]
 fn validate_signature() {
-	let nonce: u32 = 1;
-	let seq_num: u32 = 0;
-	let state = [0, 0].to_vec();
+	new_test_ext().execute_with(|| {
+		let nonce: u32 = 1;
+		let seq_num: u32 = 0;
+		let state = [0, 0].to_vec();
 
-	let alice_pair = account_pair("Alice");
-	let alice_public = alice_pair.public();
-	let bob_pair = account_pair("Bob");
-	let bob_public = bob_pair.public();
-	let signers_vec = [alice_public.clone(), bob_public.clone()].to_vec();
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let signers_vec = [alice_public.clone(), bob_public.clone()].to_vec();
 
-	let mut encoded = nonce.encode();
-	encoded.extend(seq_num.encode());
-	encoded.extend(state.encode());
+		let mut encoded = nonce.encode();
+		encoded.extend(seq_num.encode());
+		encoded.extend(state.encode());
 
-	let alice_sig = alice_pair.sign(&encoded);
-	let bob_sig = bob_pair.sign(&encoded);
-	let sig_vec = [alice_sig, bob_sig].to_vec();
+		let alice_sig = alice_pair.sign(&encoded);
+		let bob_sig = bob_pair.sign(&encoded);
+		let sig_vec = [alice_sig.clone(), bob_sig.clone()].to_vec();
 
+		assert_ok!(OffchainTrade::valid_signers(
+			sig_vec,
+			&encoded,
+			signers_vec
+		));
 
-	assert_ok!(OffchainTrade::valid_signers(
-		sig_vec,
-		&encoded,
-		signers_vec
-	));
+		let risa_pair = account_pair("Risa");
+		let risa_public = risa_pair.public();
+		let invalid_signers_vec = [alice_public.clone(), risa_public.clone()].to_vec();
+		let invalid_sig_vec = [alice_sig.clone(), bob_sig.clone()].to_vec();
+
+		assert_noop!(
+			OffchainTrade::valid_signers(
+				invalid_sig_vec,
+				&encoded,
+				invalid_signers_vec
+			),
+			Error::<Test>::InvalidSignature
+		);
+	});
+}
+
+#[test]
+fn test_create_access_condition() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let players_vec = [alice_public.clone(), bob_public.clone()].to_vec();
+
+		let condition_pair = account_pair("Condition");
+		let condition_public = condition_pair.public();
+
+		let did_pair = account_pair("DID");
+		let did_public = did_pair.public();
+
+		let nonce = 2;
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec,
+				nonce,
+				did_public.clone(),
+				condition_public.clone()
+			)
+		);
+		assert_eq!(OffchainTrade::condition_key(), 1);
+		assert_eq!(
+			OffchainTrade::key_of_condition(condition_public.clone()), Some(0)
+		);
+		assert_eq!(
+			OffchainTrade::condition_address(0), Some(condition_public.clone())
+		);
+		assert_eq!(OffchainTrade::did_key(), 3);
+		assert_eq!(OffchainTrade::did_list(2), Some(did_public.clone()));
+		assert_eq!(OffchainTrade::key_of_did(did_public.clone()), Some(2));
+		
+		let risa_pair = account_pair("Risa");
+		let risa_public = risa_pair.public();
+		let invalid_players_vec = [alice_public.clone(), bob_public.clone(), risa_public.clone()].to_vec();
+		assert_noop!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				invalid_players_vec,
+				nonce,
+				did_public.clone(),
+				condition_public.clone()
+			),
+			Error::<Test>::InvalidPlayerLength
+		);
+	});
 }
