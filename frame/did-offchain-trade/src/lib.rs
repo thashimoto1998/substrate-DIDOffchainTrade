@@ -5,16 +5,12 @@ use pallet_did::{BooleanOwner};
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error, 
 	dispatch::DispatchResult, ensure, 
-	storage::{StorageMap},
+	storage::{StorageMap}
 };
 use sp_runtime::traits::{IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
 use frame_system::{self as system, ensure_signed};
 use sp_core::{RuntimeDebug};
-
-
-#[cfg(test)]
-mod mock;
 
 #[cfg(test)]
 mod tests;
@@ -36,7 +32,7 @@ pub enum AppStatus {
 	FINALIZED,
 }
 
-type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
+type AccessConditionOf<T> = AccessCondition<<T as frame_system::Trait>::AccountId>;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct AppState {
@@ -318,13 +314,6 @@ decl_module! {
 			Ok(())
 		}
 
-		
-		//pub fn isFinalized() {}
-
-		//pub fn getOutcome() {}
-
-		//pub fn checkPermissions() {}
-
 		pub fn set_new_did(origin, did: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			
@@ -511,7 +500,7 @@ impl<T: Trait> Module<T> {
 }
 
 impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
-	fn is_finalized(condition_address: &T::AccountId) -> bool {
+    fn is_finalized(condition_address: &T::AccountId) -> bool {
 		let access_condition = match Self::condition_list(condition_address) {
 			Some(_condition) => _condition,
 			None => return false

@@ -19,7 +19,8 @@ std = [
     'safe-mix/std',
     'frame-system/std',
     'pallet-did/std',
-    'node-primitives/std'
+    'node-primitives/std',
+    'pallet-balances/std'
 ]
 
 [dependencies.serde]
@@ -91,4 +92,11 @@ default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'node-primitives'
 rev = '013c1ee167354a08283fb69915fda56a62fee943'
+version = '2.0.0-alpha.3'
+
+[dependencies.pallet-balances]
+default_features = false
+git = 'https://github.com/paritytech/substrate.git'
+package = 'pallet-balances'
+rev =  '013c1ee167354a08283fb69915fda56a62fee943'
 version = '2.0.0-alpha.3'
