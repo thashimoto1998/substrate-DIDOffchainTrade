@@ -32,7 +32,7 @@ pub enum AppStatus {
 	FINALIZED,
 }
 
-type AccessConditionOf<T> = AccessCondition<<T as frame_system::Trait>::AccountId>;
+type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct AppState {
@@ -113,11 +113,13 @@ decl_module! {
 
 			// TODO: Refactoring and default <DIDKey> is 2.
 			let mut did_key = Self::did_key();
-			if did_key == 0 || did_key == 1 {
+			if did_key == 0 {
 				did_key = 2;
-			} 
+				<DIDKey>::mutate(|key| *key = 3);
+			} else {
+				<DIDKey>::mutate(|key| *key += 1);
+			}
 			<DIDList<T>>::insert(did_key, &did);
-			<DIDKey>::mutate(|key| *key += 1);
 			<KeyOfDID<T>>::insert(&did, did_key);
 
 			if is_player1 == true {
@@ -321,11 +323,13 @@ decl_module! {
 			ensure!(is_owner == true, Error::<T>::NotOwner);
 
 			let mut did_key = Self::did_key();
-			if did_key == 0 || did_key == 1{
+			if did_key == 0 {
 				did_key = 2;
+				<DIDKey>::mutate(|key| *key = 3);
+			} else {
+				<DIDKey>::mutate(|key| *key += 1);
 			}
 			<DIDList<T>>::insert(did_key, &did);
-			<DIDKey>::mutate(|key| *key += 1);
 			<KeyOfDID<T>>::insert(&did, did_key);
 
 			Self::deposit_event(
@@ -404,6 +408,27 @@ decl_module! {
 
 			Ok(())
 		}
+
+		pub fn get_access_condition(origin, condition_address: T::AccountId) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			
+			let access_condition = match Self::condition_list(&condition_address) {
+				Some(_condition) => _condition,
+				None => return Err(Error::<T>::InvalidConditionAddress.into())
+			};
+
+			Self::deposit_event(
+				RawEvent::AccessCondition(
+					access_condition.nonce,
+					access_condition.players,
+					access_condition.seq_num,
+					access_condition.owner,
+					access_condition.grantee
+				)
+			);
+
+			Ok(())
+		}
 	}
 }
 
@@ -429,6 +454,7 @@ decl_event!(
 		DID(AccountId),
 		ConditionAddressKey(u32),
 		ConditionAddress(AccountId),
+		AccessCondition(u32, Vec<AccountId>, u32, AccountId, AccountId),
 	}
 );
 
