@@ -137,7 +137,7 @@ decl_module! {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			ensure!(transaction.app_state.state.len() == 2, Error::<T>::InvalidState);
+			ensure!(transaction.app_state.state.len() == 2, Error::<T>::InvalidStateLength);
 			let condition_address = match Self::condition_address(transaction.app_state.state[0]) {
 				Some(_address) => _address,
 				None => return Err(Error::<T>::InvalidState.into())
@@ -202,7 +202,7 @@ decl_module! {
 			} else {
 				let did = match Self::did_list(transaction.app_state.state[1]) {
 					Some(_did) => _did,
-					None => return Err(Error::<T>::InvalidState.into())
+					None => return Err(Error::<T>::InvalidDIDState.into())
 				};
 
 				let new_access_condition = AccessConditionOf::<T> {
@@ -462,6 +462,8 @@ decl_error! {
 		InvalidPlayerLength,
 		InvalidSender,
 		InvalidState,
+		InvalidStateLength,
+		InvalidDIDState,
 		InvalidNonce,
 		InvalidSeqNum,
 		InvalidSignature,
