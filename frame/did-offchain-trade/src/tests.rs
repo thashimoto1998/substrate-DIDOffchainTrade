@@ -306,6 +306,141 @@ fn test_intend_settle() {
 			(condition_account.clone()), bob_public.clone());
 	
 	
+		let app_state4 = AppState {
+			nonce: 2,
+			seq_num: 4,
+			state: [0, 1, 1].to_vec()
+		};
+
+		let mut encoded4 = app_state4.nonce.encode();
+		encoded4.extend(app_state4.seq_num.encode());
+		encoded4.extend(app_state4.state.encode());
+
+		let alice_sig4 = alice_pair.sign(&encoded4);
+		let bob_sig4 = bob_pair.sign(&encoded4);
+		let sigs_vec4 = [alice_sig4.clone(), bob_sig4.clone()].to_vec();
+
+		let state_proof4 = StateProof {
+			app_state: app_state4,
+			sigs: sigs_vec4,
+		};
+		
+		assert_noop!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof4
+			),
+			Error::<Test>::InvalidStateLength
+		);
+
+		
+		let app_state5 = AppState {
+			nonce: 2,
+			seq_num: 4,
+			state: [1, 1].to_vec()
+		};
+
+		let mut encoded5 = app_state5.nonce.encode();
+		encoded5.extend(app_state5.seq_num.encode());
+		encoded5.extend(app_state5.state.encode());
+
+		let alice_sig5 = alice_pair.sign(&encoded5);
+		let bob_sig5 = bob_pair.sign(&encoded5);
+		let sigs_vec5 = [alice_sig5.clone(), bob_sig5.clone()].to_vec();
+
+		let state_proof5 = StateProof {
+			app_state: app_state5,
+			sigs: sigs_vec5,
+		};
+
+		assert_noop!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof5
+			),
+			Error::<Test>::InvalidState
+		);
+
+		let app_state6 = AppState {
+			nonce: 3,
+			seq_num: 4,
+			state: [0, 1].to_vec()
+		};
+
+		let mut encoded6 = app_state6.nonce.encode();
+		encoded6.extend(app_state6.seq_num.encode());
+		encoded6.extend(app_state6.state.encode());
+
+		let alice_sig6 = alice_pair.sign(&encoded6);
+		let bob_sig6 = bob_pair.sign(&encoded6);
+		let sigs_vec6 = [alice_sig6.clone(), bob_sig6.clone()].to_vec();
+
+		let state_proof6 = StateProof {
+			app_state: app_state6,
+			sigs: sigs_vec6,
+		};
+
+		assert_noop!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof6
+			),
+			Error::<Test>::InvalidNonce
+		);		
+
+		let app_state7 = AppState {
+			nonce: 2,
+			seq_num: 3,
+			state: [0, 1].to_vec()
+		};
+
+		let mut encoded7 = app_state7.nonce.encode();
+		encoded7.extend(app_state7.seq_num.encode());
+		encoded7.extend(app_state7.state.encode());
+
+		let alice_sig7 = alice_pair.sign(&encoded7);
+		let bob_sig7 = bob_pair.sign(&encoded7);
+		let sigs_vec7 = [alice_sig7.clone(), bob_sig7.clone()].to_vec();
+
+		let state_proof7 = StateProof {
+			app_state: app_state7,
+			sigs: sigs_vec7,
+		};
+
+		assert_noop!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof7
+			),
+			Error::<Test>::InvalidSeqNum
+		);
+
+		let app_state8 = AppState {
+			nonce: 2,
+			seq_num: 4,
+			state: [0, 3].to_vec()
+		};
+
+		let mut encoded8 = app_state8.nonce.encode();
+		encoded8.extend(app_state8.seq_num.encode());
+		encoded8.extend(app_state8.state.encode());
+
+		let alice_sig8 = alice_pair.sign(&encoded8);
+		let bob_sig8 = bob_pair.sign(&encoded8);
+		let sigs_vec8 = [alice_sig8.clone(), bob_sig8.clone()].to_vec();
+
+		let state_proof8 = StateProof {
+			app_state: app_state8,
+			sigs: sigs_vec8,
+		};
+
+		assert_noop!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof8
+			),
+			Error::<Test>::InvalidDIDState
+		);
 	});
 }
 
