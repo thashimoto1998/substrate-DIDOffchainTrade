@@ -338,6 +338,7 @@ decl_module! {
 					did_key
 				)
 			);
+			
 			Ok(())
 		}
 
