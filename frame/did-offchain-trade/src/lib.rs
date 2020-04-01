@@ -34,14 +34,14 @@ pub enum AppStatus {
 
 type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AppState {
 	pub nonce: u32,
 	pub seq_num: u32,
 	pub state: Vec<u32>,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct StateProof<Signature> {
 	pub app_state: AppState,
 	pub sigs: Vec<Signature>,
@@ -61,7 +61,7 @@ pub trait SingleSessionBooleanOutcome<AccountId> {
 	fn get_outcome(condition_address: &AccountId) -> bool;
 }
 
-pub trait PaymentOutcome<AccountId> {
+pub trait PaymentChannel<AccountId> {
 	fn check_permissions(identity: AccountId, grantee: AccountId) -> bool;
 }
 
@@ -447,8 +447,6 @@ decl_event!(
 		SeqNum(u32, BlockNumber),
 		Owner(AccountId, BlockNumber),
 		Grantee(AccountId, BlockNumber),
-		BooleanOutcome(bool),
-		AccessPermission(bool),
 		NewDID(AccountId, u32),
 		DIDKey(u32),
 		DID(AccountId),
@@ -523,6 +521,18 @@ impl<T: Trait> Module<T> {
 		);
 		Ok(())
 	}
+
+	// To use test
+	pub fn test_get_owner(
+		condition_address: T::AccountId
+	) -> T::AccountId {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_address) => _address,
+			None => return condition_address
+		};
+
+		return access_condition.owner;
+	}
 }
 
 impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
@@ -557,7 +567,7 @@ impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
 	}
 }
 
-impl<T: Trait> PaymentOutcome<T::AccountId> for Module<T> {
+impl<T: Trait> PaymentChannel<T::AccountId> for Module<T> {
 	fn check_permissions(identity: T::AccountId, grantee: T::AccountId) -> bool {
 		let _grantee = match Self::permission(identity) {
 			Some(_grantee) => _grantee,

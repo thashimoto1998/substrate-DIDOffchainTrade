@@ -145,11 +145,9 @@ fn test_create_access_condition() {
 		let bob_public = bob_pair.public();
 		let players_vec = [alice_public.clone(), bob_public.clone()].to_vec();
 
-		let condition_pair = account_pair("Condition");
-		let condition_public = condition_pair.public();
+		let condition_account = account_key("Condition");
 
-		let did_pair = account_pair("DID");
-		let did_public = did_pair.public();
+		let did_account = account_key("DID");
 
 		let nonce = 2;
 
@@ -158,21 +156,22 @@ fn test_create_access_condition() {
 				Origin::signed(alice_public.clone()),
 				players_vec,
 				nonce,
-				did_public.clone(),
-				condition_public.clone()
+				did_account.clone(),
+				condition_account.clone()
 			)
 		);
 		assert_eq!(OffchainTrade::condition_key(), 1);
 		assert_eq!(
-			OffchainTrade::key_of_condition(condition_public.clone()), Some(0)
+			OffchainTrade::key_of_condition(condition_account.clone()), Some(0)
 		);
 		assert_eq!(
-			OffchainTrade::condition_address(0), Some(condition_public.clone())
+			OffchainTrade::condition_address(0), Some(condition_account.clone())
 		);
 		assert_eq!(OffchainTrade::did_key(), 3);
-		assert_eq!(OffchainTrade::did_list(2), Some(did_public.clone()));
-		assert_eq!(OffchainTrade::key_of_did(did_public.clone()), Some(2));
-		
+		assert_eq!(OffchainTrade::did_list(2), Some(did_account.clone()));
+		assert_eq!(OffchainTrade::key_of_did(did_account.clone()), Some(2));
+		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
+
 		let risa_pair = account_pair("Risa");
 		let risa_public = risa_pair.public();
 		let invalid_players_vec = [alice_public.clone(), bob_public.clone(), risa_public.clone()].to_vec();
@@ -181,10 +180,151 @@ fn test_create_access_condition() {
 				Origin::signed(alice_public.clone()),
 				invalid_players_vec,
 				nonce,
-				did_public.clone(),
-				condition_public.clone()
+				did_account.clone(),
+				condition_account.clone()
 			),
 			Error::<Test>::InvalidPlayerLength
 		);
+	});
+}
+
+#[test]
+fn test_intend_settle() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let players_vec = [alice_public.clone(), bob_public.clone()].to_vec();
+
+		let condition_account = account_key("Condition");
+
+		let did_account = account_key("DID");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec,
+				2,
+				did_account.clone(),
+				condition_account.clone()
+			)
+		);
+
+		let app_state1 = AppState {
+			nonce: 2,
+			seq_num: 1,
+			state: [0, 2].to_vec(),
+		};
+
+		let mut encoded1 = app_state1.nonce.encode();
+		encoded1.extend(app_state1.seq_num.encode());
+		encoded1.extend(app_state1.state.encode());
+
+		let alice_sig1 = alice_pair.sign(&encoded1);
+		let bob_sig1 = bob_pair.sign(&encoded1);
+		let sigs_vec1 = [alice_sig1.clone(), bob_sig1.clone()].to_vec();
+
+		let state_proof1 = StateProof {
+			app_state: app_state1,
+			sigs: sigs_vec1,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof1
+			)
+		);
+		assert_eq!(
+			OffchainTrade::permission(did_account.clone()), Some(bob_public.clone())
+		);
+		assert_eq!(OffchainTrade::is_finalized(&condition_account), true);
+		assert_eq!(OffchainTrade::get_outcome(&condition_account), true);
+		assert_eq!(OffchainTrade::check_permissions(
+			did_account.clone(), bob_public.clone()), 
+			true
+		);
+
+		let app_state2 = AppState {
+			nonce: 2,
+			seq_num: 2,
+			state: [0, 1].to_vec()
+		};
+
+		let mut encoded2 = app_state2.nonce.encode();
+		encoded2.extend(app_state2.seq_num.encode());
+		encoded2.extend(app_state2.state.encode());
+
+		let alice_sig2 = alice_pair.sign(&encoded2);
+		let bob_sig2 = bob_pair.sign(&encoded2);
+		let sigs_vec2 = [alice_sig2.clone(), bob_sig2.clone()].to_vec();
+
+		let state_proof2 = StateProof {
+			app_state: app_state2,
+			sigs: sigs_vec2,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof2
+			)
+		);
+		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
+		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
+	
+
+		let app_state3 = AppState {
+			nonce: 2,
+			seq_num: 3,
+			state: [0, 0].to_vec()
+		};
+
+		let mut encoded3 = app_state3.nonce.encode();
+		encoded3.extend(app_state3.seq_num.encode());
+		encoded3.extend(app_state3.state.encode());
+
+		let alice_sig3 = alice_pair.sign(&encoded3);
+		let bob_sig3 = bob_pair.sign(&encoded3);
+		let sigs_vec3 = [alice_sig3.clone(), bob_sig3.clone()].to_vec();
+
+		let state_proof3 = StateProof {
+			app_state: app_state3,
+			sigs: sigs_vec3,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof3
+			)
+		);
+		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
+		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
+		assert_eq!(OffchainTrade::test_get_owner
+			(condition_account.clone()), bob_public.clone());
+	
+	
+	});
+}
+
+#[test]
+fn test_set_new_did() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+
+		let did_account = account_key("DID");
+
+		assert_ok!(
+			OffchainTrade::set_new_did(
+				Origin::signed(alice_public.clone()),
+				did_account.clone()
+			)
+		);
+		assert_eq!(OffchainTrade::did_key(), 3);
+		assert_eq!(OffchainTrade::did_list(2), Some(did_account.clone()));
+		assert_eq!(OffchainTrade::key_of_did(did_account.clone()), Some(2));
 	});
 }
