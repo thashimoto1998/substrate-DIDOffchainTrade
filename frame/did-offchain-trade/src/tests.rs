@@ -1156,6 +1156,6 @@ fn test_dispatch_function() {
 			)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
-	
+
 	});
 }
