@@ -211,34 +211,32 @@ fn test_intend_settle() {
 			)
 		);
 
-		let app_state1 = AppState {
+		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
 			state: [0, 2].to_vec(),
 		};
 
-		let mut encoded1 = app_state1.nonce.encode();
-		encoded1.extend(app_state1.seq_num.encode());
-		encoded1.extend(app_state1.state.encode());
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
 
-		let alice_sig1 = alice_pair.sign(&encoded1);
-		let bob_sig1 = bob_pair.sign(&encoded1);
-		let sigs_vec1 = [alice_sig1.clone(), bob_sig1.clone()].to_vec();
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
 
-		let state_proof1 = StateProof {
-			app_state: app_state1,
-			sigs: sigs_vec1,
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
 		};
 
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof1
+				state_proof_1
 			)
 		);
-		assert_eq!(
-			OffchainTrade::permission(did_account.clone()), Some(bob_public.clone())
-		);
+	
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), true);
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), true);
 		assert_eq!(OffchainTrade::check_permissions(
@@ -246,23 +244,23 @@ fn test_intend_settle() {
 			true
 		);
 
-		let app_state2 = AppState {
+		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
 			state: [0, 1].to_vec()
 		};
 
-		let mut encoded2 = app_state2.nonce.encode();
-		encoded2.extend(app_state2.seq_num.encode());
-		encoded2.extend(app_state2.state.encode());
+		let mut encoded_2 = app_state_2.nonce.encode();
+		encoded_2.extend(app_state_2.seq_num.encode());
+		encoded_2.extend(app_state_2.state.encode());
 
-		let alice_sig2 = alice_pair.sign(&encoded2);
-		let bob_sig2 = bob_pair.sign(&encoded2);
-		let sigs_vec2 = [alice_sig2.clone(), bob_sig2.clone()].to_vec();
+		let alice_sig_2 = alice_pair.sign(&encoded_2);
+		let bob_sig_2 = bob_pair.sign(&encoded_2);
+		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
 		let state_proof2 = StateProof {
-			app_state: app_state2,
-			sigs: sigs_vec2,
+			app_state: app_state_2,
+			sigs: sigs_vec_2,
 		};
 
 		assert_ok!(
@@ -275,23 +273,23 @@ fn test_intend_settle() {
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
 	
 
-		let app_state3 = AppState {
+		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 3,
 			state: [0, 0].to_vec()
 		};
 
-		let mut encoded3 = app_state3.nonce.encode();
-		encoded3.extend(app_state3.seq_num.encode());
-		encoded3.extend(app_state3.state.encode());
+		let mut encoded_3 = app_state_3.nonce.encode();
+		encoded_3.extend(app_state_3.seq_num.encode());
+		encoded_3.extend(app_state_3.state.encode());
 
-		let alice_sig3 = alice_pair.sign(&encoded3);
-		let bob_sig3 = bob_pair.sign(&encoded3);
-		let sigs_vec3 = [alice_sig3.clone(), bob_sig3.clone()].to_vec();
+		let alice_sig_3 = alice_pair.sign(&encoded_3);
+		let bob_sig_3 = bob_pair.sign(&encoded_3);
+		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
 		let state_proof3 = StateProof {
-			app_state: app_state3,
-			sigs: sigs_vec3,
+			app_state: app_state_3,
+			sigs: sigs_vec_3,
 		};
 
 		assert_ok!(
@@ -306,23 +304,23 @@ fn test_intend_settle() {
 			(condition_account.clone()), bob_public.clone());
 	
 	
-		let app_state4 = AppState {
+		let app_state_4 = AppState {
 			nonce: 2,
 			seq_num: 4,
 			state: [0, 1, 1].to_vec()
 		};
 
-		let mut encoded4 = app_state4.nonce.encode();
-		encoded4.extend(app_state4.seq_num.encode());
-		encoded4.extend(app_state4.state.encode());
+		let mut encoded_4 = app_state_4.nonce.encode();
+		encoded_4.extend(app_state_4.seq_num.encode());
+		encoded_4.extend(app_state_4.state.encode());
 
-		let alice_sig4 = alice_pair.sign(&encoded4);
-		let bob_sig4 = bob_pair.sign(&encoded4);
-		let sigs_vec4 = [alice_sig4.clone(), bob_sig4.clone()].to_vec();
+		let alice_sig_4 = alice_pair.sign(&encoded_4);
+		let bob_sig_4 = bob_pair.sign(&encoded_4);
+		let sigs_vec_4 = [alice_sig_4.clone(), bob_sig_4.clone()].to_vec();
 
 		let state_proof4 = StateProof {
-			app_state: app_state4,
-			sigs: sigs_vec4,
+			app_state: app_state_4,
+			sigs: sigs_vec_4,
 		};
 		
 		assert_noop!(
@@ -334,23 +332,23 @@ fn test_intend_settle() {
 		);
 
 		
-		let app_state5 = AppState {
+		let app_state_5 = AppState {
 			nonce: 2,
 			seq_num: 4,
 			state: [1, 1].to_vec()
 		};
 
-		let mut encoded5 = app_state5.nonce.encode();
-		encoded5.extend(app_state5.seq_num.encode());
-		encoded5.extend(app_state5.state.encode());
+		let mut encoded_5 = app_state_5.nonce.encode();
+		encoded_5.extend(app_state_5.seq_num.encode());
+		encoded_5.extend(app_state_5.state.encode());
 
-		let alice_sig5 = alice_pair.sign(&encoded5);
-		let bob_sig5 = bob_pair.sign(&encoded5);
-		let sigs_vec5 = [alice_sig5.clone(), bob_sig5.clone()].to_vec();
+		let alice_sig_5 = alice_pair.sign(&encoded_5);
+		let bob_sig_5 = bob_pair.sign(&encoded_5);
+		let sigs_vec_5 = [alice_sig_5.clone(), bob_sig_5.clone()].to_vec();
 
 		let state_proof5 = StateProof {
-			app_state: app_state5,
-			sigs: sigs_vec5,
+			app_state: app_state_5,
+			sigs: sigs_vec_5,
 		};
 
 		assert_noop!(
@@ -361,23 +359,23 @@ fn test_intend_settle() {
 			Error::<Test>::InvalidState
 		);
 
-		let app_state6 = AppState {
+		let app_state_6 = AppState {
 			nonce: 3,
 			seq_num: 4,
 			state: [0, 1].to_vec()
 		};
 
-		let mut encoded6 = app_state6.nonce.encode();
-		encoded6.extend(app_state6.seq_num.encode());
-		encoded6.extend(app_state6.state.encode());
+		let mut encoded_6 = app_state_6.nonce.encode();
+		encoded_6.extend(app_state_6.seq_num.encode());
+		encoded_6.extend(app_state_6.state.encode());
 
-		let alice_sig6 = alice_pair.sign(&encoded6);
-		let bob_sig6 = bob_pair.sign(&encoded6);
-		let sigs_vec6 = [alice_sig6.clone(), bob_sig6.clone()].to_vec();
+		let alice_sig_6 = alice_pair.sign(&encoded_6);
+		let bob_sig_6 = bob_pair.sign(&encoded_6);
+		let sigs_vec_6 = [alice_sig_6.clone(), bob_sig_6.clone()].to_vec();
 
 		let state_proof6 = StateProof {
-			app_state: app_state6,
-			sigs: sigs_vec6,
+			app_state: app_state_6,
+			sigs: sigs_vec_6,
 		};
 
 		assert_noop!(
@@ -388,23 +386,23 @@ fn test_intend_settle() {
 			Error::<Test>::InvalidNonce
 		);		
 
-		let app_state7 = AppState {
+		let app_state_7 = AppState {
 			nonce: 2,
 			seq_num: 3,
 			state: [0, 1].to_vec()
 		};
 
-		let mut encoded7 = app_state7.nonce.encode();
-		encoded7.extend(app_state7.seq_num.encode());
-		encoded7.extend(app_state7.state.encode());
+		let mut encoded_7 = app_state_7.nonce.encode();
+		encoded_7.extend(app_state_7.seq_num.encode());
+		encoded_7.extend(app_state_7.state.encode());
 
-		let alice_sig7 = alice_pair.sign(&encoded7);
-		let bob_sig7 = bob_pair.sign(&encoded7);
-		let sigs_vec7 = [alice_sig7.clone(), bob_sig7.clone()].to_vec();
+		let alice_sig_7 = alice_pair.sign(&encoded_7);
+		let bob_sig_7 = bob_pair.sign(&encoded_7);
+		let sigs_vec_7 = [alice_sig_7.clone(), bob_sig_7.clone()].to_vec();
 
 		let state_proof7 = StateProof {
-			app_state: app_state7,
-			sigs: sigs_vec7,
+			app_state: app_state_7,
+			sigs: sigs_vec_7,
 		};
 
 		assert_noop!(
@@ -415,23 +413,23 @@ fn test_intend_settle() {
 			Error::<Test>::InvalidSeqNum
 		);
 
-		let app_state8 = AppState {
+		let app_state_8 = AppState {
 			nonce: 2,
 			seq_num: 4,
 			state: [0, 3].to_vec()
 		};
 
-		let mut encoded8 = app_state8.nonce.encode();
-		encoded8.extend(app_state8.seq_num.encode());
-		encoded8.extend(app_state8.state.encode());
+		let mut encoded_8 = app_state_8.nonce.encode();
+		encoded_8.extend(app_state_8.seq_num.encode());
+		encoded_8.extend(app_state_8.state.encode());
 
-		let alice_sig8 = alice_pair.sign(&encoded8);
-		let bob_sig8 = bob_pair.sign(&encoded8);
-		let sigs_vec8 = [alice_sig8.clone(), bob_sig8.clone()].to_vec();
+		let alice_sig_8 = alice_pair.sign(&encoded_8);
+		let bob_sig_8 = bob_pair.sign(&encoded_8);
+		let sigs_vec_8 = [alice_sig_8.clone(), bob_sig_8.clone()].to_vec();
 
 		let state_proof8 = StateProof {
-			app_state: app_state8,
-			sigs: sigs_vec8,
+			app_state: app_state_8,
+			sigs: sigs_vec_8,
 		};
 
 		assert_noop!(
@@ -442,26 +440,26 @@ fn test_intend_settle() {
 			Error::<Test>::InvalidDIDState
 		);
 		
-		let app_state9 = AppState {
+		let app_state_9 = AppState {
 			nonce: 2,
 			seq_num: 4,
 			state: [0, 0].to_vec(),
 		};
 		
-		let mut encoded9 = app_state9.nonce.encode();
-		encoded9.extend(app_state9.seq_num.encode());
-		encoded9.extend(app_state9.state.encode());
+		let mut encoded_9 = app_state_9.nonce.encode();
+		encoded_9.extend(app_state_9.seq_num.encode());
+		encoded_9.extend(app_state_9.state.encode());
 		
 		let risa_pair = account_pair("Risa");
 		let risa_public = risa_pair.public();
 
-		let alice_sig9 = alice_pair.sign(&encoded9);
-		let risa_sig = risa_pair.sign(&encoded9);
-		let sigs_vec9 = [alice_sig9.clone(), risa_sig.clone()].to_vec();
+		let alice_sig_9 = alice_pair.sign(&encoded_9);
+		let risa_sig = risa_pair.sign(&encoded_9);
+		let sigs_vec_9 = [alice_sig_9.clone(), risa_sig.clone()].to_vec();
 
 		let state_proof9 = StateProof {
-			app_state: app_state9,
-			sigs: sigs_vec9,
+			app_state: app_state_9,
+			sigs: sigs_vec_9,
 		};
 		assert_noop!(
 			OffchainTrade::intend_settle(
@@ -516,29 +514,29 @@ fn test_another_DID_trade(){
 			)
 		);
 
-		let app_state1 = AppState {
+		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
 			state: [0, 2].to_vec(),
 		};
 
-		let mut encoded1 = app_state1.nonce.encode();
-		encoded1.extend(app_state1.seq_num.encode());
-		encoded1.extend(app_state1.state.encode());
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
 
-		let alice_sig1 = alice_pair.sign(&encoded1);
-		let bob_sig1 = bob_pair.sign(&encoded1);
-		let sigs_vec1 = [alice_sig1.clone(), bob_sig1.clone()].to_vec();
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
 
-		let state_proof1 = StateProof {
-			app_state: app_state1,
-			sigs: sigs_vec1,
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
 		};
 
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof1
+				state_proof_1
 			)
 		);
 
@@ -552,23 +550,23 @@ fn test_another_DID_trade(){
 		);
 		assert_eq!(OffchainTrade::key_of_did(did2_account.clone()), Some(3));
 
-		let app_state2 = AppState {
+		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
 			state: [0, 1].to_vec(),
 		};
 
-		let mut encoded2 = app_state2.nonce.encode();
-		encoded2.extend(app_state2.seq_num.encode());
-		encoded2.extend(app_state2.state.encode());
+		let mut encoded_2 = app_state_2.nonce.encode();
+		encoded_2.extend(app_state_2.seq_num.encode());
+		encoded_2.extend(app_state_2.state.encode());
 
-		let alice_sig2 = alice_pair.sign(&encoded2);
-		let bob_sig2 = bob_pair.sign(&encoded2);
-		let sigs_vec2 = [alice_sig2.clone(), bob_sig2.clone()].to_vec();
+		let alice_sig_2 = alice_pair.sign(&encoded_2);
+		let bob_sig_2 = bob_pair.sign(&encoded_2);
+		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
 		let state_proof2 = StateProof {
-			app_state: app_state2,
-			sigs: sigs_vec2,
+			app_state: app_state_2,
+			sigs: sigs_vec_2,
 		};
 
 		assert_ok!(
@@ -579,23 +577,23 @@ fn test_another_DID_trade(){
 		);
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 
-		let app_state3 = AppState {
+		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 3,
 			state: [0, 3].to_vec(),
 		};
 
-		let mut encoded3 = app_state3.nonce.encode();
-		encoded3.extend(app_state3.seq_num.encode());
-		encoded3.extend(app_state3.state.encode());
+		let mut encoded_3 = app_state_3.nonce.encode();
+		encoded_3.extend(app_state_3.seq_num.encode());
+		encoded_3.extend(app_state_3.state.encode());
 
-		let alice_sig3 = alice_pair.sign(&encoded3);
-		let bob_sig3 = bob_pair.sign(&encoded3);
-		let sigs_vec3 = [alice_sig3.clone(), bob_sig3.clone()].to_vec();
+		let alice_sig_3 = alice_pair.sign(&encoded_3);
+		let bob_sig_3 = bob_pair.sign(&encoded_3);
+		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
 		let state_proof3 = StateProof {
-			app_state: app_state3,
-			sigs: sigs_vec3,
+			app_state: app_state_3,
+			sigs: sigs_vec_3,
 		};
 
 		assert_ok!(
@@ -636,29 +634,29 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 			)
 		);
 
-		let app_state1 = AppState {
+		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
 			state: [0, 2].to_vec(),
 		};
 
-		let mut encoded1 = app_state1.nonce.encode();
-		encoded1.extend(app_state1.seq_num.encode());
-		encoded1.extend(app_state1.state.encode());
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
 
-		let alice_sig1 = alice_pair.sign(&encoded1);
-		let bob_sig1 = bob_pair.sign(&encoded1);
-		let sigs_vec1 = [alice_sig1.clone(), bob_sig1.clone()].to_vec();
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
 
-		let state_proof1 = StateProof {
-			app_state: app_state1,
-			sigs: sigs_vec1,
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
 		};
 
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof1
+				state_proof_1
 			)
 		);
 
@@ -672,23 +670,23 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		);
 		assert_eq!(OffchainTrade::key_of_did(did2_account.clone()), Some(3));
 
-		let app_state2 = AppState {
+		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
 			state: [0, 0].to_vec(),
 		};
 
-		let mut encoded2 = app_state2.nonce.encode();
-		encoded2.extend(app_state2.seq_num.encode());
-		encoded2.extend(app_state2.state.encode());
+		let mut encoded_2 = app_state_2.nonce.encode();
+		encoded_2.extend(app_state_2.seq_num.encode());
+		encoded_2.extend(app_state_2.state.encode());
 
-		let alice_sig2 = alice_pair.sign(&encoded2);
-		let bob_sig2 = bob_pair.sign(&encoded2);
-		let sigs_vec2 = [alice_sig2.clone(), bob_sig2.clone()].to_vec();
+		let alice_sig_2 = alice_pair.sign(&encoded_2);
+		let bob_sig_2 = bob_pair.sign(&encoded_2);
+		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
 		let state_proof2 = StateProof {
-			app_state: app_state2,
-			sigs: sigs_vec2,
+			app_state: app_state_2,
+			sigs: sigs_vec_2,
 		};
 
 		assert_ok!(
@@ -700,23 +698,23 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 		assert_eq!(OffchainTrade::test_get_owner(condition_account.clone()), bob_public.clone());
 
-		let app_state3 = AppState {
+		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 3,
 			state: [0, 3].to_vec(),
 		};
 
-		let mut encoded3 = app_state3.nonce.encode();
-		encoded3.extend(app_state3.seq_num.encode());
-		encoded3.extend(app_state3.state.encode());
+		let mut encoded_3 = app_state_3.nonce.encode();
+		encoded_3.extend(app_state_3.seq_num.encode());
+		encoded_3.extend(app_state_3.state.encode());
 
-		let alice_sig3 = alice_pair.sign(&encoded3);
-		let bob_sig3 = bob_pair.sign(&encoded3);
-		let sigs_vec3 = [alice_sig3.clone(), bob_sig3.clone()].to_vec();
+		let alice_sig_3 = alice_pair.sign(&encoded_3);
+		let bob_sig_3 = bob_pair.sign(&encoded_3);
+		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
 		let state_proof3 = StateProof {
-			app_state: app_state3,
-			sigs: sigs_vec3,
+			app_state: app_state_3,
+			sigs: sigs_vec_3,
 		};
 
 		assert_ok!(

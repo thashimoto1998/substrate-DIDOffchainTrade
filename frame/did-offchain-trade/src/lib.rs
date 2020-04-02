@@ -5,7 +5,7 @@ use pallet_did::{BooleanOwner};
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error, 
 	dispatch::DispatchResult, ensure, 
-	storage::{StorageMap}
+	storage::{StorageMap, StorageDoubleMap},
 };
 use sp_runtime::traits::{IdentifyAccount, Member, Verify};
 use sp_std::{prelude::*, vec::Vec};
@@ -82,7 +82,7 @@ decl_storage! {
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		
 		pub DocumentPermissionsStates get(fn permission):
-			map hasher(blake2_256) T::AccountId => Option<T::AccountId>;
+			double_map hasher(blake2_256) T::AccountId, hasher(blake2_256) T::AccountId => u8;
 	}
 }
 
@@ -216,7 +216,7 @@ decl_module! {
 				};
 
 				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
-				<DocumentPermissionsStates<T>>::insert(&did, &access_condition.grantee);
+				<DocumentPermissionsStates<T>>::insert(&did, &access_condition.grantee, 1);
 			
 				Self::deposit_event(
 					RawEvent::IntendSettle(
@@ -572,12 +572,7 @@ impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
 
 impl<T: Trait> PaymentChannel<T::AccountId> for Module<T> {
 	fn check_permissions(identity: T::AccountId, grantee: T::AccountId) -> bool {
-		let _grantee = match Self::permission(identity) {
-			Some(_grantee) => _grantee,
-			None => return false
-		};
-
-		if grantee == _grantee {
+		if Self::permission(&identity, &grantee) == 1{
 			return true;
 		} else {
 			return false;
