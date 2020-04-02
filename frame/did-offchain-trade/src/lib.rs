@@ -205,6 +205,8 @@ decl_module! {
 					None => return Err(Error::<T>::InvalidDIDState.into())
 				};
 
+				ensure!(access_condition.status == AppStatus::IDLE, Error::<T>::NotIdleStatus);
+
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
 					players: access_condition.players.clone(),
@@ -471,6 +473,7 @@ decl_error! {
 		InvalidConditionAddress,
 		NotExist,
 		ExistAddress,
+		NotIdleStatus,
 	}
 }
 
