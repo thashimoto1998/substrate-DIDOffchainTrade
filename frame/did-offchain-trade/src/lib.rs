@@ -111,16 +111,10 @@ decl_module! {
 			<ConditionKey>::mutate(|key| *key += 1);
 			<KeyOfCondition<T>>::insert(&condition_address, condition_key);
 
-			// TODO: Refactoring and default <DIDKey> is 2.
-			let mut did_key = Self::did_key();
-			if did_key == 0 {
-				did_key = 2;
-				<DIDKey>::mutate(|key| *key = 3);
-			} else {
-				<DIDKey>::mutate(|key| *key += 1);
-			}
-			<DIDList<T>>::insert(did_key, &did);
-			<KeyOfDID<T>>::insert(&did, did_key);
+			let did_key = match Self::set_did(&did) {
+				Some(_key) => _key,
+				None => return Err(Error::<T>::NotExist.into())
+			};
 
 			if is_player1 == true {
 				Self::set_access_condition(condition_address, nonce, players[0].clone(), players[1].clone(), condition_key, did_key)?;
@@ -204,6 +198,8 @@ decl_module! {
 					Some(_did) => _did,
 					None => return Err(Error::<T>::InvalidDIDState.into())
 				};
+
+				ensure!(access_condition.status == AppStatus::IDLE, Error::<T>::NotIdleStatus);
 
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
@@ -322,15 +318,10 @@ decl_module! {
 			let is_owner: bool = T::BooleanOwner::boolean_owner(&did, &who);
 			ensure!(is_owner == true, Error::<T>::NotOwner);
 
-			let mut did_key = Self::did_key();
-			if did_key == 0 {
-				did_key = 2;
-				<DIDKey>::mutate(|key| *key = 3);
-			} else {
-				<DIDKey>::mutate(|key| *key += 1);
-			}
-			<DIDList<T>>::insert(did_key, &did);
-			<KeyOfDID<T>>::insert(&did, did_key);
+			let did_key = match Self::set_did(&did) {
+				Some(_key) => _key,
+				None => return Err(Error::<T>::NotExist.into())
+			};
 
 			Self::deposit_event(
 				RawEvent::NewDID(
@@ -471,6 +462,7 @@ decl_error! {
 		InvalidConditionAddress,
 		NotExist,
 		ExistAddress,
+		NotIdleStatus,
 	}
 }
 
@@ -535,6 +527,28 @@ impl<T: Trait> Module<T> {
 		};
 
 		return access_condition.owner;
+	}
+
+	fn set_did(did: &T::AccountId) -> Option<u32> {
+		if None == Self::key_of_did(did) {
+			let mut did_key = Self::did_key();
+			if did_key == 0 {
+				did_key = 2;
+				<DIDKey>::mutate(|key| *key = 3);
+			} else {
+				<DIDKey>::mutate(|key| *key += 1);
+			}
+			<DIDList<T>>::insert(did_key, did);
+			<KeyOfDID<T>>::insert(did, did_key);
+			return Some(did_key);
+		} else {
+			let did_key = match Self::key_of_did(did){
+				Some(_key) => _key,
+				None => return None
+			};
+
+			return Some(did_key);
+		}
 	}
 }
 

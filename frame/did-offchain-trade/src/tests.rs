@@ -258,7 +258,7 @@ fn test_intend_settle() {
 		let bob_sig_2 = bob_pair.sign(&encoded_2);
 		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
-		let state_proof2 = StateProof {
+		let state_proof_2 = StateProof {
 			app_state: app_state_2,
 			sigs: sigs_vec_2,
 		};
@@ -266,7 +266,7 @@ fn test_intend_settle() {
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof2
+				state_proof_2
 			)
 		);
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
@@ -287,7 +287,7 @@ fn test_intend_settle() {
 		let bob_sig_3 = bob_pair.sign(&encoded_3);
 		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
-		let state_proof3 = StateProof {
+		let state_proof_3 = StateProof {
 			app_state: app_state_3,
 			sigs: sigs_vec_3,
 		};
@@ -295,7 +295,7 @@ fn test_intend_settle() {
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof3
+				state_proof_3
 			)
 		);
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
@@ -318,7 +318,7 @@ fn test_intend_settle() {
 		let bob_sig_4 = bob_pair.sign(&encoded_4);
 		let sigs_vec_4 = [alice_sig_4.clone(), bob_sig_4.clone()].to_vec();
 
-		let state_proof4 = StateProof {
+		let state_proof_4 = StateProof {
 			app_state: app_state_4,
 			sigs: sigs_vec_4,
 		};
@@ -326,7 +326,7 @@ fn test_intend_settle() {
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof4
+				state_proof_4
 			),
 			Error::<Test>::InvalidStateLength
 		);
@@ -346,7 +346,7 @@ fn test_intend_settle() {
 		let bob_sig_5 = bob_pair.sign(&encoded_5);
 		let sigs_vec_5 = [alice_sig_5.clone(), bob_sig_5.clone()].to_vec();
 
-		let state_proof5 = StateProof {
+		let state_proof_5 = StateProof {
 			app_state: app_state_5,
 			sigs: sigs_vec_5,
 		};
@@ -354,7 +354,7 @@ fn test_intend_settle() {
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof5
+				state_proof_5
 			),
 			Error::<Test>::InvalidState
 		);
@@ -373,7 +373,7 @@ fn test_intend_settle() {
 		let bob_sig_6 = bob_pair.sign(&encoded_6);
 		let sigs_vec_6 = [alice_sig_6.clone(), bob_sig_6.clone()].to_vec();
 
-		let state_proof6 = StateProof {
+		let state_proof_6 = StateProof {
 			app_state: app_state_6,
 			sigs: sigs_vec_6,
 		};
@@ -381,7 +381,7 @@ fn test_intend_settle() {
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof6
+				state_proof_6
 			),
 			Error::<Test>::InvalidNonce
 		);		
@@ -400,7 +400,7 @@ fn test_intend_settle() {
 		let bob_sig_7 = bob_pair.sign(&encoded_7);
 		let sigs_vec_7 = [alice_sig_7.clone(), bob_sig_7.clone()].to_vec();
 
-		let state_proof7 = StateProof {
+		let state_proof_7 = StateProof {
 			app_state: app_state_7,
 			sigs: sigs_vec_7,
 		};
@@ -408,7 +408,7 @@ fn test_intend_settle() {
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof7
+				state_proof_7
 			),
 			Error::<Test>::InvalidSeqNum
 		);
@@ -427,7 +427,7 @@ fn test_intend_settle() {
 		let bob_sig_8 = bob_pair.sign(&encoded_8);
 		let sigs_vec_8 = [alice_sig_8.clone(), bob_sig_8.clone()].to_vec();
 
-		let state_proof8 = StateProof {
+		let state_proof_8 = StateProof {
 			app_state: app_state_8,
 			sigs: sigs_vec_8,
 		};
@@ -435,7 +435,7 @@ fn test_intend_settle() {
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof8
+				state_proof_8
 			),
 			Error::<Test>::InvalidDIDState
 		);
@@ -457,17 +457,18 @@ fn test_intend_settle() {
 		let risa_sig = risa_pair.sign(&encoded_9);
 		let sigs_vec_9 = [alice_sig_9.clone(), risa_sig.clone()].to_vec();
 
-		let state_proof9 = StateProof {
+		let state_proof_9 = StateProof {
 			app_state: app_state_9,
 			sigs: sigs_vec_9,
 		};
 		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof9
+				state_proof_9
 			),
 			Error::<Test>::InvalidSignature
 		);
+
 	});
 }
 
@@ -553,7 +554,7 @@ fn test_another_DID_trade(){
 		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
-			state: [0, 1].to_vec(),
+			state: [0, 3].to_vec(),
 		};
 
 		let mut encoded_2 = app_state_2.nonce.encode();
@@ -564,23 +565,23 @@ fn test_another_DID_trade(){
 		let bob_sig_2 = bob_pair.sign(&encoded_2);
 		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
-		let state_proof2 = StateProof {
+		let state_proof_2 = StateProof {
 			app_state: app_state_2,
 			sigs: sigs_vec_2,
 		};
 
-		assert_ok!(
+		assert_noop!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof2
-			)
+				state_proof_2
+			),
+			Error::<Test>::NotIdleStatus
 		);
-		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
-
+		
 		let app_state_3 = AppState {
 			nonce: 2,
-			seq_num: 3,
-			state: [0, 3].to_vec(),
+			seq_num: 2,
+			state: [0, 1].to_vec(),
 		};
 
 		let mut encoded_3 = app_state_3.nonce.encode();
@@ -591,7 +592,7 @@ fn test_another_DID_trade(){
 		let bob_sig_3 = bob_pair.sign(&encoded_3);
 		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
-		let state_proof3 = StateProof {
+		let state_proof_3 = StateProof {
 			app_state: app_state_3,
 			sigs: sigs_vec_3,
 		};
@@ -599,7 +600,34 @@ fn test_another_DID_trade(){
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof3
+				state_proof_3
+			)
+		);
+		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
+
+		let app_state_4 = AppState {
+			nonce: 2,
+			seq_num: 3,
+			state: [0, 3].to_vec(),
+		};
+
+		let mut encoded_4 = app_state_4.nonce.encode();
+		encoded_4.extend(app_state_4.seq_num.encode());
+		encoded_4.extend(app_state_4.state.encode());
+
+		let alice_sig_4 = alice_pair.sign(&encoded_4);
+		let bob_sig_4 = bob_pair.sign(&encoded_4);
+		let sigs_vec_4 = [alice_sig_4.clone(), bob_sig_4.clone()].to_vec();
+
+		let state_proof_4 = StateProof {
+			app_state: app_state_4,
+			sigs: sigs_vec_4,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_4
 			)
 		);
 		assert_eq!((OffchainTrade::is_finalized(&condition_account)), true);
@@ -684,7 +712,7 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		let bob_sig_2 = bob_pair.sign(&encoded_2);
 		let sigs_vec_2 = [alice_sig_2.clone(), bob_sig_2.clone()].to_vec();
 
-		let state_proof2 = StateProof {
+		let state_proof_2 = StateProof {
 			app_state: app_state_2,
 			sigs: sigs_vec_2,
 		};
@@ -692,7 +720,7 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof2
+				state_proof_2
 			)
 		);
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
@@ -712,7 +740,7 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		let bob_sig_3 = bob_pair.sign(&encoded_3);
 		let sigs_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
 
-		let state_proof3 = StateProof {
+		let state_proof_3 = StateProof {
 			app_state: app_state_3,
 			sigs: sigs_vec_3,
 		};
@@ -720,7 +748,7 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		assert_ok!(
 			OffchainTrade::intend_settle(
 				Origin::signed(alice_public.clone()),
-				state_proof3
+				state_proof_3
 			)
 		);
 		assert_eq!((OffchainTrade::is_finalized(&condition_account)), true);
@@ -730,4 +758,105 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 			true
 		);
 	});
+}
+
+#[test]
+fn test_DID_trade_with_two_grantee() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let players_vec_1 = [alice_public.clone(), bob_public.clone()].to_vec();
+
+		let condition_account_1 = account_key("Condition1");
+
+		let did_account = account_key("DID");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec_1,
+				2,
+				did_account.clone(),
+				condition_account_1.clone()
+			)
+		);
+
+		let app_state_1 = AppState {
+			nonce: 2,
+			seq_num: 1,
+			state: [0, 2].to_vec(),
+		};
+
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
+
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
+
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_1
+			)
+		);
+
+
+		let risa_pair = account_pair("Risa");
+		let risa_public = risa_pair.public();
+		let players_vec_2 = [alice_public.clone(), risa_public.clone()].to_vec();
+
+		let condition_account_2 = account_key("Condition2");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec_2,
+				3,
+				did_account.clone(),
+				condition_account_2.clone()
+			)
+		);
+
+		let app_state_2 = AppState {
+			nonce: 3,
+			seq_num: 1,
+			state: [1, 2].to_vec(),
+		};
+
+		let mut encoded_2 = app_state_2.nonce.encode();
+		encoded_2.extend(app_state_2.seq_num.encode());
+		encoded_2.extend(app_state_2.state.encode());
+
+		let alice_sig_2 = alice_pair.sign(&encoded_2);
+		let risa_sig = risa_pair.sign(&encoded_2);
+		let sigs_vec_2 = [alice_sig_2.clone(), risa_sig.clone()].to_vec();
+
+		let state_proof_2 = StateProof {
+			app_state: app_state_2,
+			sigs: sigs_vec_2,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_2
+			)
+		);
+
+		assert_eq!((OffchainTrade::is_finalized(&condition_account_2)), true);
+		assert_eq!((OffchainTrade::get_outcome(&condition_account_2)), true);
+		assert_eq!(
+			(OffchainTrade::check_permissions(did_account.clone(), risa_public.clone())), 
+			true
+		);
+	})
 }
