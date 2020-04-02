@@ -70,7 +70,7 @@ decl_storage! {
 		pub ConditionKey get(fn condition_key): u32;
 		pub AccessConditionAddressList get(fn condition_address): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
-		pub KeyOfCondition get(fn key_of_condition):
+		pub KeyOfConditionAddress get(fn key_of_condition):
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		pub AccessConditionList get(fn condition_list): 
 			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
@@ -554,7 +554,7 @@ impl<T: Trait> Module<T> {
 		let condition_key = Self::condition_key();
 		<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
 		<ConditionKey>::mutate(|key| *key += 1);
-		<KeyOfCondition<T>>::insert(&condition_address, condition_key);
+		<KeyOfConditionAddress<T>>::insert(&condition_address, condition_key);
 		
 		return condition_key
 	}
