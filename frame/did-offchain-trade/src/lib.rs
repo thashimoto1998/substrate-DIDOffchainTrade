@@ -49,7 +49,7 @@ pub struct StateProof<Signature> {
 
 
 /// The pallet's configuration trait.
-pub trait Trait: frame_system::Trait  {
+pub trait Trait: system::Trait  {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	type Public: IdentifyAccount<AccountId = Self::AccountId>;
 	type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
@@ -106,6 +106,7 @@ decl_module! {
 			let is_player2: bool = T::BooleanOwner::boolean_owner(&did, &players[1]);
 			ensure!(is_player1 == true || is_player2 == true, Error::<T>::NotOwner);
 
+			ensure!(KeyOfConditionAddress::<T>::contains_key(&condition_address) == false, Error::<T>::ExistAddress);
 			let condition_key = Self::set_condition(&condition_address);
 
 			let did_key = match Self::set_did(&did) {
@@ -145,7 +146,6 @@ decl_module! {
 			let mut encoded = transaction.app_state.nonce.encode();
 			encoded.extend(transaction.app_state.seq_num.encode());
 			encoded.extend(transaction.app_state.state.encode());
-
 			Self::valid_signers(transaction.sigs, &encoded, players)?;
 
 			ensure!(access_condition.nonce == transaction.app_state.nonce, Error::<T>::InvalidNonce);
