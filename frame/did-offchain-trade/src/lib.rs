@@ -70,7 +70,7 @@ decl_storage! {
 		pub ConditionKey get(fn condition_key): u32;
 		pub AccessConditionAddressList get(fn condition_address): 
 			map hasher(blake2_256) u32 => Option<T::AccountId>;
-		pub KeyOfCondition get(fn key_of_condition):
+		pub KeyOfConditionAddress get(fn key_of_condition):
 			map hasher(blake2_256) T::AccountId => Option<u32>;
 		pub AccessConditionList get(fn condition_list): 
 			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
@@ -106,10 +106,7 @@ decl_module! {
 			let is_player2: bool = T::BooleanOwner::boolean_owner(&did, &players[1]);
 			ensure!(is_player1 == true || is_player2 == true, Error::<T>::NotOwner);
 
-			let condition_key = Self::condition_key();
-			<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
-			<ConditionKey>::mutate(|key| *key += 1);
-			<KeyOfCondition<T>>::insert(&condition_address, condition_key);
+			let condition_key = Self::set_condition(&condition_address);
 
 			let did_key = match Self::set_did(&did) {
 				Some(_key) => _key,
@@ -221,6 +218,7 @@ decl_module! {
 					)
 				);
 			}
+			
 			Ok(())
 		}
 
@@ -540,6 +538,7 @@ impl<T: Trait> Module<T> {
 			}
 			<DIDList<T>>::insert(did_key, did);
 			<KeyOfDID<T>>::insert(did, did_key);
+
 			return Some(did_key);
 		} else {
 			let did_key = match Self::key_of_did(did){
@@ -549,6 +548,15 @@ impl<T: Trait> Module<T> {
 
 			return Some(did_key);
 		}
+	}
+
+	fn set_condition(condition_address: &T::AccountId) -> u32 {
+		let condition_key = Self::condition_key();
+		<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
+		<ConditionKey>::mutate(|key| *key += 1);
+		<KeyOfConditionAddress<T>>::insert(&condition_address, condition_key);
+		
+		return condition_key
 	}
 }
 
