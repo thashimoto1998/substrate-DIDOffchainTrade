@@ -759,3 +759,104 @@ fn test_another_DID_trade_and_swap_owner_grantee() {
 		);
 	});
 }
+
+#[test]
+fn test_DID_trade_with_two_grantee() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let players_vec_1 = [alice_public.clone(), bob_public.clone()].to_vec();
+
+		let condition_account_1 = account_key("Condition1");
+
+		let did_account = account_key("DID");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec_1,
+				2,
+				did_account.clone(),
+				condition_account_1.clone()
+			)
+		);
+
+		let app_state_1 = AppState {
+			nonce: 2,
+			seq_num: 1,
+			state: [0, 2].to_vec(),
+		};
+
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
+
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
+
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_1
+			)
+		);
+
+
+		let risa_pair = account_pair("Risa");
+		let risa_public = risa_pair.public();
+		let players_vec_2 = [alice_public.clone(), risa_public.clone()].to_vec();
+
+		let condition_account_2 = account_key("Condition2");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec_2,
+				3,
+				did_account.clone(),
+				condition_account_2.clone()
+			)
+		);
+
+		let app_state_2 = AppState {
+			nonce: 3,
+			seq_num: 1,
+			state: [1, 2].to_vec(),
+		};
+
+		let mut encoded_2 = app_state_2.nonce.encode();
+		encoded_2.extend(app_state_2.seq_num.encode());
+		encoded_2.extend(app_state_2.state.encode());
+
+		let alice_sig_2 = alice_pair.sign(&encoded_2);
+		let risa_sig = risa_pair.sign(&encoded_2);
+		let sigs_vec_2 = [alice_sig_2.clone(), risa_sig.clone()].to_vec();
+
+		let state_proof_2 = StateProof {
+			app_state: app_state_2,
+			sigs: sigs_vec_2,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_2
+			)
+		);
+
+		assert_eq!((OffchainTrade::is_finalized(&condition_account_2)), true);
+		assert_eq!((OffchainTrade::get_outcome(&condition_account_2)), true);
+		assert_eq!(
+			(OffchainTrade::check_permissions(did_account.clone(), risa_public.clone())), 
+			true
+		);
+	})
+}
