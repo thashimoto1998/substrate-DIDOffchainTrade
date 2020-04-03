@@ -6,10 +6,10 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 use frame_support::{
-	assert_err, assert_ok, assert_noop, impl_outer_origin, 
-	impl_outer_event, parameter_types, StorageMap, weights::Weight,
+	assert_ok, assert_noop, impl_outer_origin, 
+	impl_outer_event, parameter_types, weights::Weight,
 };
-use frame_system::{self, EventRecord, Phase};
+use frame_system::{self,};
 use sp_core::{sr25519, Pair, H256};
 use pallet_balances;
 
@@ -61,11 +61,6 @@ impl_outer_event! {
 
 /// define mock did trait
 pub trait MockDIDTrait: system::Trait  {}
-decl_storage! {
-	trait Store for MockDIDModule<T: MockDIDTrait > as MockDID {
-		pub OwnerOf get(owner_of): map hasher(blake2_256) <T as frame_system::Trait>::AccountId => Option<<T as frame_system::Trait>::AccountId>;
-	}
-}
 pub struct MockDIDModule<T: MockDIDTrait>(PhantomData<T>);
 impl<T: MockDIDTrait> BooleanOwner<<T as frame_system::Trait>::AccountId> for MockDIDModule<T> {
 	fn boolean_owner(identity: &<T as frame_system::Trait>::AccountId, actual_owner: &<T as frame_system::Trait>::AccountId) -> bool {
@@ -170,7 +165,7 @@ fn test_create_access_condition() {
 			)
 		);
 
-		let mut expected_event = TestEvent::pallet_did_offchain_trade(
+		let expected_event = TestEvent::pallet_did_offchain_trade(
 				RawEvent::AccessConditionCreated(
 					condition_account.clone(),
 					alice_public.clone(),

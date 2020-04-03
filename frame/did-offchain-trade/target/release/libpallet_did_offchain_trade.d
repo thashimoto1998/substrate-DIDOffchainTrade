@@ -1,0 +1,1 @@
+/Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/did-offchain-trade/target/release/libpallet_did_offchain_trade.rlib: /Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/did-offchain-trade/src/lib.rs /Users/hashimototatsuki/substrate-pallet-DIDOffchainTrade/frame/pallet-did/src/lib.rs

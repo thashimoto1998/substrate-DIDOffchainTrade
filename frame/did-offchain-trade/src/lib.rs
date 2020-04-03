@@ -107,7 +107,7 @@ decl_module! {
 			ensure!(is_player1 == true || is_player2 == true, Error::<T>::NotOwner);
 
 			ensure!(KeyOfConditionAddress::<T>::contains_key(&condition_address) == false, Error::<T>::ExistAddress);
-			let condition_key = Self::set_condition(&condition_address);
+			let condition_key = Self::set_condition_address(&condition_address);
 
 			let did_key = match Self::set_did(&did) {
 				Some(_key) => _key,
@@ -550,7 +550,7 @@ impl<T: Trait> Module<T> {
 		}
 	}
 
-	fn set_condition(condition_address: &T::AccountId) -> u32 {
+	fn set_condition_address(condition_address: &T::AccountId) -> u32 {
 		let condition_key = Self::condition_key();
 		<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
 		<ConditionKey>::mutate(|key| *key += 1);
