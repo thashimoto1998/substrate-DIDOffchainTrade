@@ -1,6 +1,6 @@
 # substrate-pallet-DIDOffchainTrade
 
-Scalable decentralized data market protocol implemente by substrate
+Scalable decentralized data market protocol which is implemented by substrate
 
 Previous protocol(implemented by parity ethereum) is here -> (https://github.com/thashimoto1998/keeper-layer2)
 
