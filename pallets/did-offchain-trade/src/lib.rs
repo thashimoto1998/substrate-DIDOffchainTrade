@@ -49,7 +49,7 @@ pub struct StateProof<Signature> {
 
 
 /// The pallet's configuration trait.
-pub trait Trait: system::Trait  {
+pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	type Public: IdentifyAccount<AccountId = Self::AccountId>;
 	type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
@@ -69,20 +69,20 @@ decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
 		pub ConditionKey get(fn condition_key): u32;
 		pub AccessConditionAddressList get(fn condition_address): 
-			map hasher(blake2_256) u32 => Option<T::AccountId>;
+			map hasher(twox_64_concat) u32 => Option<T::AccountId>;
 		pub KeyOfConditionAddress get(fn key_of_condition):
-			map hasher(blake2_256) T::AccountId => Option<u32>;
+			map hasher(twox_64_concat) T::AccountId => Option<u32>;
 		pub AccessConditionList get(fn condition_list): 
-			map hasher(blake2_256) T::AccountId => Option<AccessConditionOf<T>>;
+			map hasher(twox_64_concat) T::AccountId => Option<AccessConditionOf<T>>;
 		
 		pub DIDKey get(fn did_key): u32;
 		pub DIDList get(fn did_list): 
-			map hasher(blake2_256) u32 => Option<T::AccountId>;
+			map hasher(twox_64_concat) u32 => Option<T::AccountId>;
 		pub KeyOfDID get(fn key_of_did): 
-			map hasher(blake2_256) T::AccountId => Option<u32>;
+			map hasher(twox_64_concat) T::AccountId => Option<u32>;
 		
 		pub DocumentPermissionsStates get(fn permission):
-			double_map hasher(blake2_256) T::AccountId, hasher(blake2_256) T::AccountId => u8;
+			double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => u8;
 	}
 }
 
