@@ -26,7 +26,6 @@ sp-block-builder = { default-features = false, version = "2.0.0-alpha.5", git = 
 sp-consensus-aura = { version = "0.8.0-alpha.3", default-features = false,  git = 'https://github.com/paritytech/substrate.git' }
 sp-core = { version = "2.0.0-alpha.5", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 sp-inherents = { default-features = false, version = "2.0.0-alpha.5",  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
-sp-io = { version = "2.0.0-alpha.5", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 sp-offchain = { version = "2.0.0-alpha.5", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 sp-runtime = { version = "2.0.0-alpha.5", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 sp-session = { version = "2.0.0-alpha.5", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
@@ -34,8 +33,10 @@ sp-std = { version = "2.0.0-alpha.5", default-features = false, git = 'https://g
 sp-transaction-pool = { version = "2.0.0-alpha.5", default-features = false, git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 sp-version = { version = "2.0.0-alpha.5", default-features = false, git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 did-offchain-trade = { version = "2.0.0-alpha.5", default-features = false, path = "../pallets/did-offchain-trade", package = "pallet-did-offchain-trade" }
-pallet-did = { version = "2.0.0", default-features = false, path = "../pallets/pallet-did", package = "pallet-did" }
+pallet-did = { version = "2.0.0-alpha.5", default-features = false, path = "../pallets/pallet-did", package = "pallet-did" }
 
+[dec-dependencies]
+sp-io = { version = "2.0.0-alpha.5",  git = 'https://github.com/paritytech/substrate.git', rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab' }
 
 [build-dependencies]
 wasm-builder-runner = { version = "1.0.5", package = "substrate-wasm-builder-runner",  git = 'https://github.com/paritytech/substrate.git' }
@@ -56,7 +57,6 @@ std = [
 	"sp-consensus-aura/std",
 	"sp-core/std",
 	"sp-inherents/std",
-	"sp-io/std",
 	"sp-offchain/std",
 	"sp-runtime/std",
 	"sp-session/std",
