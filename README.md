@@ -10,7 +10,7 @@ Previous protocol(implemented by parity ethereum) is here -> (https://github.com
 1. Build to Native:
 
 ```
-cd  frame/did-offchain-trade
+cd  pallets/did-offchain-trade
 
 cargo build --release
 ```
