@@ -4,7 +4,7 @@ description = 'FRAME pallet DID offchain trade'
 edition = '2018'
 license = 'Unlicense'
 name = 'pallet-did-offchain-trade'
-version = '0.1.0'
+version = '2.0.0-alpha.5'
 
 [features]
 default = ['std']
@@ -37,8 +37,8 @@ version = '1.2.0'
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.safe-mix]
 default-features = false
@@ -47,33 +47,27 @@ version = '1.0.0'
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
-
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-rev = '3e651110aa06aa835790df63410a29676243fc54'
-version = '2.0.0'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'frame-system'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.pallet-did]
 default-features = false
@@ -84,19 +78,25 @@ package = 'pallet-did'
 default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-timestamp'
-rev = '3e651110aa06aa835790df63410a29676243fc54'
-version = '2.0.0'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.node-primitives]
 default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'node-primitives'
-rev = '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
 
 [dependencies.pallet-balances]
 default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-balances'
-rev =  '013c1ee167354a08283fb69915fda56a62fee943'
-version = '2.0.0-alpha.3'
+rev =  'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
+
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+rev = 'd1b9ccad107e4899978858de5ddd2868b9777aab'
+version = '2.0.0-alpha.5'
