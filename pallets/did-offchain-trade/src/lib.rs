@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use pallet_did::{BooleanOwner};
+use pallet_did;
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error, 
 	dispatch::DispatchResult, ensure, 
@@ -47,22 +47,11 @@ pub struct StateProof<Signature> {
 	pub sigs: Vec<Signature>,
 }
 
-
 /// The pallet's configuration trait.
-pub trait Trait: system::Trait {
+pub trait Trait: system::Trait + pallet_did::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 	type Public: IdentifyAccount<AccountId = Self::AccountId>;
-	type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
-	type BooleanOwner: BooleanOwner<Self::AccountId>;
-}
-
-pub trait SingleSessionBooleanOutcome<AccountId> {
-	fn is_finalized(condition_address: &AccountId) -> bool;
-	fn get_outcome(condition_address: &AccountId) -> bool;
-}
-
-pub trait PaymentChannel<AccountId> {
-	fn check_permissions(identity: AccountId, grantee: AccountId) -> bool;
+	type Signature: Verify<Signer = <Self as Trait>::Public> + Member + Decode + Encode;
 }
 
 decl_storage! {
@@ -102,9 +91,12 @@ decl_module! {
 			let _ = ensure_signed(origin)?;
 
 			ensure!(players.len() == 2, Error::<T>::InvalidPlayerLength);
-			let is_player1: bool = T::BooleanOwner::boolean_owner(&did, &players[0]);
-			let is_player2: bool = T::BooleanOwner::boolean_owner(&did, &players[1]);
-			ensure!(is_player1 == true || is_player2 == true, Error::<T>::NotOwner);
+			
+			let owner = match <pallet_did::Module<T>>::owner_of(&did) {
+				Some(_owner) => _owner,
+				None => return Err(Error::<T>::NotExist.into())
+			};
+			ensure!(owner == players[0] || owner == players[1], Error::<T>::NotOwner);
 
 			ensure!(KeyOfConditionAddress::<T>::contains_key(&condition_address) == false, Error::<T>::ExistAddress);
 			let condition_key = Self::set_condition_address(&condition_address);
@@ -114,7 +106,7 @@ decl_module! {
 				None => return Err(Error::<T>::NotExist.into())
 			};
 
-			if is_player1 == true {
+			if owner == players[0] {
 				Self::set_access_condition(condition_address, nonce, players[0].clone(), players[1].clone(), condition_key, did_key)?;
 			} else {
 				Self::set_access_condition(condition_address, nonce, players[1].clone(), players[0].clone(), condition_key, did_key)?;
@@ -125,7 +117,7 @@ decl_module! {
 
 		pub fn intend_settle(
 			origin, 
-			transaction: StateProof<T::Signature>,
+			transaction: StateProof<<T as Trait>::Signature>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -313,8 +305,11 @@ decl_module! {
 		pub fn set_new_did(origin, did: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			
-			let is_owner: bool = T::BooleanOwner::boolean_owner(&did, &who);
-			ensure!(is_owner == true, Error::<T>::NotOwner);
+			let owner = match <pallet_did::Module<T>>::owner_of(&did) {
+				Some(_owner) => _owner,
+				None => return Err(Error::<T>::NotExist.into())
+			};
+			ensure!(who == owner, Error::<T>::NotOwner);
 
 			let did_key = match Self::set_did(&did) {
 				Some(_key) => _key,
@@ -466,7 +461,7 @@ decl_error! {
 
 impl<T: Trait> Module<T> {
 	pub fn valid_signers(
-		signatures: Vec<T::Signature>,
+		signatures: Vec<<T as Trait>::Signature>,
 		msg: &[u8],
 		signers: Vec<T::AccountId>,
 	) -> DispatchResult {
@@ -558,10 +553,8 @@ impl<T: Trait> Module<T> {
 		
 		return condition_key
 	}
-}
 
-impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
-    fn is_finalized(condition_address: &T::AccountId) -> bool {
+	pub fn is_finalized(condition_address: &T::AccountId) -> bool {
 		let access_condition = match Self::condition_list(condition_address) {
 			Some(_condition) => _condition,
 			None => return false
@@ -576,7 +569,7 @@ impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
 		}
 	}
 
-	fn get_outcome(condition_address: &T::AccountId) -> bool {
+	pub fn get_outcome(condition_address: &T::AccountId) -> bool {
 		let access_condition = match Self::condition_list(condition_address) {
 			Some(_condition) => _condition,
 			None => return false
@@ -590,10 +583,8 @@ impl<T: Trait> SingleSessionBooleanOutcome<T::AccountId> for Module<T> {
 			return false;
 		}
 	}
-}
 
-impl<T: Trait> PaymentChannel<T::AccountId> for Module<T> {
-	fn check_permissions(identity: T::AccountId, grantee: T::AccountId) -> bool {
+	pub fn check_permissions(identity: T::AccountId, grantee: T::AccountId) -> bool {
 		if Self::permission(&identity, &grantee) == 1{
 			return true;
 		} else {

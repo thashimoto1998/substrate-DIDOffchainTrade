@@ -228,7 +228,6 @@ impl did_offchain_trade::Trait for Runtime {
 	type Event = Event;
 	type Public = MultiSigner;
 	type Signature = Signature;
-	type BooleanOwner = PalletDID;
 }
 
 impl pallet_did::Trait for Runtime {
