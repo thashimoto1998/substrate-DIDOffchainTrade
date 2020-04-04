@@ -114,24 +114,25 @@ pub trait Trait: system::Trait + timestamp::Trait {
     type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
 
-pub trait BooleanOwner<AccountId> {
-    fn boolean_owner(identity: &AccountId, actual_owner: &AccountId) -> bool;
-}
-
 decl_storage! {
     trait Store for Module<T: Trait> as DID {
         /// Identity delegates stored by type.
         /// Delegates are only valid for a specific period defined as blocks number.
-        pub DelegateOf get(delegate_of): map (T::AccountId, Vec<u8>, T::AccountId) => Option<T::BlockNumber>;
+        pub DelegateOf get(delegate_of): 
+                map hasher(twox_64_concat) (T::AccountId, Vec<u8>, T::AccountId) => Option<T::BlockNumber>;
         /// The attributes that belong to an identity.
         /// Attributes are only valid for a specific period defined as blocks number.
-        pub AttributeOf get(attribute_of): map (T::AccountId, T::Hash) => Attribute<T::BlockNumber, T::Moment>;
+        pub AttributeOf get(attribute_of): 
+                map hasher(twox_64_concat) (T::AccountId, T::Hash) => Attribute<T::BlockNumber, T::Moment>;
         /// Attribute nonce used to generate a unique hash even if the attribute is deleted and recreated.
-        pub AttributeNonce get(nonce_of): map (T::AccountId, Vec<u8>) => u64;
+        pub AttributeNonce get(nonce_of): 
+                map hasher(twox_64_concat) (T::AccountId, Vec<u8>) => u64;
         /// Identity owner.
-        pub OwnerOf get(owner_of): map T::AccountId => Option<T::AccountId>;
+        pub OwnerOf get(owner_of): 
+                map hasher(twox_64_concat) T::AccountId => Option<T::AccountId>;
         /// Tracking the latest identity update.
-        pub UpdatedBy get(updated_by): map T::AccountId => (T::AccountId, T::BlockNumber, T::Moment);
+        pub UpdatedBy get(updated_by): 
+                map hasher(twox_64_concat) T::AccountId => (T::AccountId, T::BlockNumber, T::Moment);
     }
 }
 
@@ -152,7 +153,7 @@ decl_module! {
             let now_timestamp = <timestamp::Module<T>>::now();
             let now_block_number = <system::Module<T>>::block_number();
 
-            if <OwnerOf<T>>::exists(&identity) {
+            if <OwnerOf<T>>::contains_key(&identity) {
                 // Update to new owner.
                 <OwnerOf<T>>::mutate(&identity, |o| *o = Some(new_owner.clone()));
             } else {
@@ -381,7 +382,7 @@ impl<T: Trait> Module<T> {
         delegate: &T::AccountId,
     ) -> DispatchResult {
         ensure!(
-            <DelegateOf<T>>::exists((&identity, delegate_type, &delegate)),
+            <DelegateOf<T>>::contains_key((&identity, delegate_type, &delegate)),
             Error::<T>::InvalidDelegate
         );
 
@@ -439,7 +440,7 @@ impl<T: Trait> Module<T> {
 
         let id = (identity, name, lookup_nonce).using_encoded(<T as system::Trait>::Hashing::hash);
 
-        if <AttributeOf<T>>::exists((&identity, &id)) {
+        if <AttributeOf<T>>::contains_key((&identity, &id)) {
             Err(Error::<T>::AttributeCreationFailed.into())
         } else {
             let new_attribute = Attribute {
@@ -534,7 +535,7 @@ impl<T: Trait> Module<T> {
         let id = (&identity, name, lookup_nonce)
             .using_encoded(<T as system::Trait>::Hashing::hash);
 
-        if <AttributeOf<T>>::exists((&identity, &id)) {
+        if <AttributeOf<T>>::contains_key((&identity, &id)) {
             Some((Self::attribute_of((identity, id)), id))
         } else {
             None
@@ -577,18 +578,6 @@ impl<T: Trait> Module<T> {
     }
 }
 
-impl<T: Trait> BooleanOwner<T::AccountId> for Module<T> {
-    fn boolean_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> bool {
-        let owner = Self::identity_owner(identity);
-        if owner == *actual_owner {
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -601,6 +590,7 @@ mod tests {
         traits::{BlakeTwo256, IdentityLookup},
         Perbill,
     };
+    use pallet_balances;
 
     impl_outer_origin! {
         pub enum Origin for Test {}
@@ -634,6 +624,9 @@ mod tests {
         type AvailableBlockRatio = AvailableBlockRatio;
         type Version = ();
         type ModuleToIndex = ();
+        type AccountData = pallet_balances::AccountData<u64>;
+        type OnNewAccount = ();
+        type OnKilledAccount = ();
     }
 
     impl timestamp::Trait for Test {
