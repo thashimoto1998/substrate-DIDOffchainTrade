@@ -15,12 +15,12 @@ std = [
     'sp-runtime/std',
     'sp-io/std',
     'sp-std/std',
-    'timestamp/std',
+    'pallet-timestamp/std',
     'safe-mix/std',
     'frame-system/std',
     'pallet-did/std',
     'node-primitives/std',
-    'pallet-balances/std'
+    'pallet-balances/std',
 ]
 
 [dependencies.serde]
@@ -74,7 +74,7 @@ default-features = false
 path = '../pallet-did'
 package = 'pallet-did'
 
-[dependencies.timestamp]
+[dependencies.pallet-timestamp]
 default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-timestamp'

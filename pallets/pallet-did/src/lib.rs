@@ -306,6 +306,22 @@ decl_module! {
             Self::deposit_event(RawEvent::AttributeTransactionExecuted(transaction));
             Ok(())
         }
+
+        /// Register owner of identity
+        pub fn register_identity(origin, identity: T::AccountId) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+            
+            ensure!(<OwnerOf<T>>::contains_key(&identity) == false, Error::<T>::Exist);
+            <OwnerOf<T>>::insert(&identity, &who);
+
+            let now_block_number = <system::Module<T>>::block_number();
+            Self::deposit_event(RawEvent::IdentityRegistered(
+                identity,
+                who,
+                now_block_number,
+            ));
+            Ok(())
+        }
     }
 }
 
@@ -323,6 +339,7 @@ decl_event!(
     AttributeRevoked(AccountId,Vec<u8>,BlockNumber),
     AttributeDeleted(AccountId,Vec<u8>,BlockNumber),
     AttributeTransactionExecuted(AttributeTransaction<Signature,AccountId>),
+    IdentityRegistered(AccountId, AccountId, BlockNumber),
   }
 );
 
@@ -337,6 +354,7 @@ decl_error! {
         InvalidAttribute,
         Overflow,
         BadTransaction,
+        Exist,
     }
 }
 
@@ -867,5 +885,25 @@ mod tests {
                 Error::<Test>::InvalidDelegate
             );
         });
+    }
+
+    #[test]
+    fn register_new_identity() {
+        new_test_ext().execute_with(|| {
+            let identity = account_key("Identity");
+            let alice_public = account_key("Alice");
+
+            assert_ok!(
+                DID::register_identity(
+                    Origin::signed(alice_public.clone()),
+                    identity.clone(),
+                )
+            );
+
+            assert_eq!(
+                DID::identity_owner(&identity),
+                alice_public.clone()
+            );
+        })
     }
 }
