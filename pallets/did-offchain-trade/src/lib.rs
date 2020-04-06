@@ -14,6 +14,8 @@ use sp_core::{RuntimeDebug};
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod mock;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AccessCondition<AccountId> {
