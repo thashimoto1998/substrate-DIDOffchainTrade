@@ -1,20 +1,11 @@
 #![cfg(test)]
 
 use super::*;
-use sp_runtime::{
-	testing::{Header},
-	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
-};
-use sp_std::marker::PhantomData;
-use frame_support::{
-	assert_ok, assert_noop, impl_outer_origin, 
-	impl_outer_event, parameter_types, weights::Weight,
-};
-use frame_system::{self,};
-use sp_core::{sr25519, Pair, H256};
+use frame_support::{assert_ok, assert_noop};
+use frame_system;
+use sp_core::{sr25519, Pair};
 use mock::{
-	Test, Origin, System, OffchainTrade, DID, new_test_ext,
+	Test, Origin, System, OffchainTrade, DID, new_test_ext, TestEvent,
 };
 
 pub fn account_pair(s: &str) -> sr25519::Pair {
@@ -101,6 +92,17 @@ fn test_create_access_condition() {
 			)
 		);
 
+		let expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::AccessConditionCreated(
+				condition_account.clone(),
+				alice_public.clone(),
+				bob_public.clone(),
+				0,
+				2
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+		
 		assert_eq!(OffchainTrade::condition_key(), 1);
 		assert_eq!(
 			OffchainTrade::key_of_condition(condition_account.clone()), Some(0)
@@ -187,6 +189,14 @@ fn test_intend_settle() {
 			)
 		);
 
+		let mut expected_event = TestEvent::pallet_did_offchain_trade(
+				RawEvent::IntendSettle(
+					condition_account.clone(),
+					System::block_number(),
+				)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), true);
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), true);
 		assert_eq!(OffchainTrade::check_permissions(
@@ -220,7 +230,6 @@ fn test_intend_settle() {
 			)
 		);
 
-		/**
 		expected_event = TestEvent::pallet_did_offchain_trade(
 				RawEvent::SetIdle(
 					condition_account.clone(),
@@ -228,7 +237,7 @@ fn test_intend_settle() {
 				)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
-		*/
+		
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
 	
@@ -259,7 +268,6 @@ fn test_intend_settle() {
 			)
 		);
 
-		/**
 		expected_event = TestEvent::pallet_did_offchain_trade(
 				RawEvent::SwapPosition(
 					condition_account.clone(),
@@ -267,7 +275,7 @@ fn test_intend_settle() {
 				)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
-		*/
+
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
 		assert_eq!(OffchainTrade::test_get_owner
@@ -464,7 +472,6 @@ fn test_set_new_did() {
 			)
 		);
 
-		/**
 		let expected_event = TestEvent::pallet_did_offchain_trade(
 				RawEvent::NewDID(
 					identity.clone(),
@@ -472,7 +479,7 @@ fn test_set_new_did() {
 				)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
-		*/
+
 		assert_eq!(OffchainTrade::did_key(), 3);
 		assert_eq!(OffchainTrade::did_list(2), Some(identity.clone()));
 		assert_eq!(OffchainTrade::key_of_did(identity.clone()), Some(2));
@@ -892,3 +899,237 @@ fn test_did_trade_with_two_grantee() {
 		);
 	});
 }
+
+#[test]
+fn test_dispatch_function() {
+	new_test_ext().execute_with(|| {
+		let alice_pair = account_pair("Alice");
+		let alice_public = alice_pair.public();
+		let bob_pair = account_pair("Bob");
+		let bob_public = bob_pair.public();
+		let players_vec = [alice_public.clone(), bob_public.clone()].to_vec();
+
+		let identity = account_key("Identity");
+		assert_ok!(
+			DID::register_identity(
+				Origin::signed(alice_public.clone()),
+				identity.clone(),
+			)
+		);
+
+		let nonce = 2;
+		let condition_account = account_key("Condition");
+
+		assert_ok!(
+			OffchainTrade::create_access_condition(
+				Origin::signed(alice_public.clone()),
+				players_vec.clone(),
+				nonce,
+				identity.clone(),
+				condition_account.clone()
+			)
+		);
+
+
+		assert_ok!(
+			OffchainTrade::get_access_condition(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		let mut expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::AccessCondition(
+				2,
+				players_vec.clone(),
+				0,
+				alice_public.clone(),
+				bob_public.clone()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::access_condition_address(
+				Origin::signed(alice_public.clone()),
+				0
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::ConditionAddress(
+				condition_account.clone()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::access_condition_address_key(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::ConditionAddressKey(
+				0
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_did(
+				Origin::signed(alice_public.clone()),
+				2
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::DID(
+				identity.clone()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_did(
+				Origin::signed(alice_public.clone()),
+				2
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::DID(
+				identity.clone()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_did_key(
+				Origin::signed(alice_public.clone()),
+				identity.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::DIDKey(
+				2
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_owner(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::Owner(
+				alice_public.clone(),
+				System::block_number()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_grantee(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::Grantee(
+				bob_public.clone(),
+				System::block_number()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_seq_num(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::SeqNum(
+				0,
+				System::block_number()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+
+		assert_ok!(
+			OffchainTrade::get_status(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::IdleStatus(
+				condition_account.clone(),
+				System::block_number()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+	
+
+		let app_state_1 = AppState {
+			nonce: 2,
+			seq_num: 1,
+			state: [0, 2].to_vec(),
+		};
+
+		let mut encoded_1 = app_state_1.nonce.encode();
+		encoded_1.extend(app_state_1.seq_num.encode());
+		encoded_1.extend(app_state_1.state.encode());
+
+		let alice_sig_1 = alice_pair.sign(&encoded_1);
+		let bob_sig_1 = bob_pair.sign(&encoded_1);
+		let sigs_vec_1 = [alice_sig_1.clone(), bob_sig_1.clone()].to_vec();
+
+		let state_proof_1 = StateProof {
+			app_state: app_state_1,
+			sigs: sigs_vec_1,
+		};
+
+		assert_ok!(
+			OffchainTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_1
+			)
+		);
+
+		assert_ok!(
+			OffchainTrade::get_status(
+				Origin::signed(alice_public.clone()),
+				condition_account.clone()
+			)
+		);
+
+		expected_event = TestEvent::pallet_did_offchain_trade(
+			RawEvent::FinalizedStatus(
+				condition_account.clone(),
+				System::block_number()
+			)
+		);
+		assert!(System::events().iter().any(|a| a.event == expected_event));
+
+	});
+}
+
