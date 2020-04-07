@@ -1,31 +1,29 @@
 #![cfg(test)]
 
-use std::cell::RefCell;
-
 use crate::{Module, Trait};
 use sp_runtime::Perbill;
-use sp_runtime::testing::{Header, UintAuthorityId, TestXt};
-use sp_runtime::traits::{IdentityLookup, BlakeTwo256, ConvertInto};
-use frame_support::{impl_outer_origin, impl_outer_dispatch, parameter_types, weights::Weight};
-use sp_core::{sr25519, Pair, H256};
-
+use sp_runtime::testing::{Header};
+use sp_runtime::traits::{IdentityLookup, BlakeTwo256};
+use frame_support::{impl_outer_origin, impl_outer_event,
+	 parameter_types, weights::Weight};
+use sp_core::{sr25519, H256};
 use frame_system as system;
+
 impl_outer_origin!{
 	pub enum Origin for Test {}
 }
 
-/**
-mod palllet_did_offchain_trade {
+mod pallet_did_offchain_trade {
     pub use crate::Event;
 }
 
 impl_outer_event! {
     pub enum TestEvent for Test {
         pallet_did_offchain_trade<T>,
-        frame_system<T>,
-    }
+        system<T>,
+		pallet_did<T>,
+	}
 }
-*/
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
@@ -47,7 +45,7 @@ impl frame_system::Trait for Test {
 	type AccountId = sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = TestEvent;
 	type BlockHashCount = BlockHashCount;
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type MaximumBlockLength = MaximumBlockLength;
@@ -69,13 +67,13 @@ impl pallet_timestamp::Trait for Test {
 }
 
 impl pallet_did::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Public = sr25519::Public;
 	type Signature = sr25519::Signature;
 }
 
 impl Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Public = sr25519::Public;
     type Signature = sr25519::Signature;
 }

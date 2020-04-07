@@ -509,6 +509,7 @@ impl<T: Trait> Module<T> {
 				did_key,
 			)
 		);
+		
 		Ok(())
 	}
 
