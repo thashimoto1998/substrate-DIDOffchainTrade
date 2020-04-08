@@ -19,9 +19,9 @@ mod mock;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AccessCondition<AccountId> {
-	pub nonce: u32,
+	pub nonce: i32,
 	pub players: Vec<AccountId>,
-	pub seq_num: u32,
+	pub seq_num: i32,
 	pub status: AppStatus,
 	pub outcome: bool,
 	pub owner: AccountId,
@@ -38,9 +38,9 @@ type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AppState {
-	pub nonce: u32,
-	pub seq_num: u32,
-	pub state: Vec<u32>,
+	pub nonce: i32,
+	pub seq_num: i32,
+	pub state: Vec<i32>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
@@ -58,19 +58,19 @@ pub trait Trait: system::Trait + pallet_did::Trait {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDOffchainTrade {
-		pub ConditionKey get(fn condition_key): u32;
+		pub ConditionKey get(fn condition_key): i32;
 		pub AccessConditionAddressList get(fn condition_address): 
-			map hasher(twox_64_concat) u32 => Option<T::AccountId>;
+			map hasher(twox_64_concat) i32 => Option<T::AccountId>;
 		pub KeyOfConditionAddress get(fn key_of_condition):
-			map hasher(twox_64_concat) T::AccountId => Option<u32>;
+			map hasher(twox_64_concat) T::AccountId => Option<i32>;
 		pub AccessConditionList get(fn condition_list): 
 			map hasher(twox_64_concat) T::AccountId => Option<AccessConditionOf<T>>;
 		
-		pub DIDKey get(fn did_key): u32;
+		pub DIDKey get(fn did_key): i32;
 		pub DIDList get(fn did_list): 
-			map hasher(twox_64_concat) u32 => Option<T::AccountId>;
+			map hasher(twox_64_concat) i32 => Option<T::AccountId>;
 		pub KeyOfDID get(fn key_of_did): 
-			map hasher(twox_64_concat) T::AccountId => Option<u32>;
+			map hasher(twox_64_concat) T::AccountId => Option<i32>;
 		
 		pub DocumentPermissionsStates get(fn permission):
 			double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => u8;
@@ -86,7 +86,7 @@ decl_module! {
 		pub fn create_access_condition(
 			origin,
 			players: Vec<T::AccountId>, 
-			nonce: u32,
+			nonce: i32,
 			did: T::AccountId,
 			condition_address: T::AccountId
 		) -> DispatchResult {
@@ -145,7 +145,7 @@ decl_module! {
 			ensure!(access_condition.nonce == transaction.app_state.nonce, Error::<T>::InvalidNonce);
 			ensure!(access_condition.seq_num < transaction.app_state.seq_num, Error::<T>::InvalidSeqNum);
 
-			if transaction.app_state.state[1] == 0 {
+			if transaction.app_state.state[1] == -1 {
 				let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
@@ -164,7 +164,7 @@ decl_module! {
 						<frame_system::Module<T>>::block_number(),
 					)
 				);
-			} else if transaction.app_state.state[1] == 1 {
+			} else if transaction.app_state.state[1] == -2 {
 				let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
@@ -216,93 +216,6 @@ decl_module! {
 			Ok(())
 		}
 
-		pub fn get_status(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			
-			let access_condition = match Self::condition_list(&condition_address) {
-				Some(_condtion) => _condtion,
-				None => return Err(Error::<T>::InvalidConditionAddress.into())
-			};
-			
-			let status = access_condition.status;
-			
-			if status == AppStatus::IDLE {
-				Self::deposit_event(
-					RawEvent::IdleStatus(
-						condition_address, 
-						<frame_system::Module<T>>::block_number(),
-				));
-			} else {
-				Self::deposit_event(
-					RawEvent::FinalizedStatus(
-						condition_address,
-						<frame_system::Module<T>>::block_number(),
-					)
-				);
-			}
-			
-			Ok(())
-		}
-
-		pub fn get_seq_num(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			
-			let access_condition = match Self::condition_list(&condition_address) {
-				Some(_condtion) => _condtion,
-				None => return Err(Error::<T>::InvalidConditionAddress.into())
-			};
-
-			let seq = access_condition.seq_num;
-			
-			Self::deposit_event(
-				RawEvent::SeqNum(
-					seq,
-					<frame_system::Module<T>>::block_number(),
-				)
-			);
-			
-			Ok(())
-		}
-
-		pub fn get_owner(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-
-			let access_condition = match Self::condition_list(&condition_address) {
-				Some(_condtion) => _condtion,
-				None => return Err(Error::<T>::InvalidConditionAddress.into())
-			};
-			
-			let owner = access_condition.owner;
-			
-			Self::deposit_event(
-				RawEvent::Owner(
-					owner,
-					<frame_system::Module<T>>::block_number(),
-				)
-			);
-			
-			Ok(())
-		}
-
-		pub fn get_grantee(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			
-			let access_condition = match Self::condition_list(&condition_address) {
-				Some(_condtion) => _condtion,
-				None => return Err(Error::<T>::InvalidConditionAddress.into())
-			};
-
-			let grantee = access_condition.grantee;
-			
-			Self::deposit_event(
-				RawEvent::Grantee(
-					grantee,
-					<frame_system::Module<T>>::block_number(),
-				)
-			);
-			
-			Ok(())
-		}
 
 		pub fn set_new_did(origin, did: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -326,76 +239,8 @@ decl_module! {
 			);
 			
 			Ok(())
-		}
-
-		pub fn get_did_key(origin, did: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-
-			let key = match Self::key_of_did(&did) {
-				Some(_key) => _key,
-				None => return Err(Error::<T>::NotExist.into())
-			};
-
-			Self::deposit_event(
-				RawEvent::DIDKey(
-					key
-				)
-			);
-
-			Ok(())
-		}
-
-		pub fn get_did(origin, key: u32) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-
-			let _did = match Self::did_list(key) {
-				Some(_did) => _did,
-				None => return Err(Error::<T>::NotExist.into())
-			};
-			
-			Self::deposit_event(
-				RawEvent::DID(
-					_did
-				)
-			);
-
-			Ok(())
-		}
-
-		pub fn access_condition_address_key(origin, condition_address: T::AccountId) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-
-			let key = match Self::key_of_condition(&condition_address) {
-				Some(_key) => _key,
-				None => return Err(Error::<T>::NotExist.into())
-			};
-
-			Self::deposit_event(
-				RawEvent::ConditionAddressKey(
-					key
-				)
-			);
-
-			Ok(())
-		}
-
-		pub fn access_condition_address(origin, condition_key: u32) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-
-			let condition_address = match Self::condition_address(condition_key) {
-				Some(_address) => _address,
-				None => return Err(Error::<T>::NotExist.into())
-			};
-
-			Self::deposit_event(
-				RawEvent::ConditionAddress(
-					condition_address
-				)
-			);
-
-			Ok(())
-		}
-
+		}		
+		
 		pub fn get_access_condition(origin, condition_address: T::AccountId) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			
@@ -425,21 +270,21 @@ decl_event!(
 	<T as frame_system::Trait>::AccountId,
 	<T as frame_system::Trait>::BlockNumber,
 	{
-		AccessConditionCreated(AccountId, AccountId, AccountId, u32, u32),
+		AccessConditionCreated(AccountId, AccountId, AccountId, i32, i32),
 		SwapPosition(AccountId, BlockNumber),
 		SetIdle(AccountId, BlockNumber),
 		IntendSettle(AccountId, BlockNumber),
 		IdleStatus(AccountId, BlockNumber),
 		FinalizedStatus(AccountId, BlockNumber),
-		SeqNum(u32, BlockNumber),
+		SeqNum(i32, BlockNumber),
 		Owner(AccountId, BlockNumber),
 		Grantee(AccountId, BlockNumber),
-		NewDID(AccountId, u32),
-		DIDKey(u32),
+		NewDID(AccountId, i32),
+		DIDKey(i32),
 		DID(AccountId),
-		ConditionAddressKey(u32),
+		ConditionAddressKey(i32),
 		ConditionAddress(AccountId),
-		AccessCondition(u32, Vec<AccountId>, u32, AccountId, AccountId),
+		AccessCondition(i32, Vec<AccountId>, i32, AccountId, AccountId),
 	}
 );
 
@@ -480,11 +325,11 @@ impl<T: Trait> Module<T> {
 
 	fn set_access_condition(
 		condition_address: T::AccountId, 
-		nonce: u32,
+		nonce: i32,
 		owner: T::AccountId,
 		grantee: T::AccountId,
-		condition_key: u32,
-		did_key: u32,
+		condition_key: i32,
+		did_key: i32,
 	) -> DispatchResult {
 		let players: Vec<T::AccountId> = vec![owner.clone(), grantee.clone()];
 		
@@ -513,48 +358,23 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	// To use test
-	pub fn test_get_owner(
-		condition_address: T::AccountId
-	) -> T::AccountId {
-		let access_condition = match Self::condition_list(&condition_address) {
-			Some(_address) => _address,
-			None => return condition_address
-		};
 
-		return access_condition.owner;
+	fn set_did(did: &T::AccountId) -> Option<i32> {
+		let did_key = Self::did_key();
+		<DIDList<T>>::insert(did_key, did);
+		<KeyOfDID<T>>::insert(did, did_key);
+		<DIDKey>::mutate(|key| *key += 1);
+
+		return Some(did_key);
 	}
 
-	fn set_did(did: &T::AccountId) -> Option<u32> {
-		if None == Self::key_of_did(did) {
-			let mut did_key = Self::did_key();
-			if did_key == 0 {
-				did_key = 2;
-				<DIDKey>::mutate(|key| *key = 3);
-			} else {
-				<DIDKey>::mutate(|key| *key += 1);
-			}
-			<DIDList<T>>::insert(did_key, did);
-			<KeyOfDID<T>>::insert(did, did_key);
-
-			return Some(did_key);
-		} else {
-			let did_key = match Self::key_of_did(did){
-				Some(_key) => _key,
-				None => return None
-			};
-
-			return Some(did_key);
-		}
-	}
-
-	fn set_condition_address(condition_address: &T::AccountId) -> u32 {
+	fn set_condition_address(condition_address: &T::AccountId) ->i32 {
 		let condition_key = Self::condition_key();
 		<AccessConditionAddressList<T>>::insert(condition_key, &condition_address);
 		<ConditionKey>::mutate(|key| *key += 1);
 		<KeyOfConditionAddress<T>>::insert(&condition_address, condition_key);
 		
-		return condition_key
+		return condition_key;
 	}
 
 	pub fn is_finalized(condition_address: &T::AccountId) -> bool {
@@ -593,5 +413,73 @@ impl<T: Trait> Module<T> {
 		} else {
 			return false;
 		}
+	}
+
+	pub fn get_nonce(condition_address: T::AccountId) -> i32 {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_condition) => _condition,
+			None => return -1
+		};
+
+		return access_condition.nonce;
+	}
+
+	pub fn get_seq_num(condition_address: T::AccountId) -> i32 {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_condition) => _condition,
+			None => return -1
+		};
+
+		return access_condition.seq_num;
+	}
+
+	/// If possible, this function return AppStatus
+	pub fn get_status(condition_address: T::AccountId) -> i32 {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_condition) => _condition,
+			None => return -1
+		};
+		
+		if access_condition.status == AppStatus::IDLE {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+
+	pub fn get_owner(condition_address: T::AccountId) -> T::AccountId {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_condition) => _condition,
+			None => return condition_address
+		};
+
+		return access_condition.owner;
+	}
+
+	pub fn get_grantee(condition_address: T::AccountId) -> T::AccountId {
+		let access_condition = match Self::condition_list(&condition_address) {
+			Some(_condition) => _condition,
+			None => return condition_address
+		};
+
+		return access_condition.grantee;
+	}
+
+	pub fn get_did_key(did: T::AccountId) -> i32 {
+		let key = match Self::key_of_did(&did) {
+			Some(_key) => _key,
+			None => return -1
+		};
+
+		return key;
+	}
+
+	pub fn access_condition_address_key(condition_address: T::AccountId) -> i32 {
+		let key = match Self::key_of_condition(&condition_address) {
+			Some(_key) => _key,
+			None => return -1
+		};
+
+		return key;
 	}
 }
