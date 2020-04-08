@@ -78,7 +78,7 @@ impl Trait for Test {
     type Signature = sr25519::Signature;
 }
 
-pub type OffchainTrade = Module<Test>;
+pub type DIDTrade = Module<Test>;
 pub type System = frame_system::Module<Test>;
 pub type DID = pallet_did::Module<Test>;
 

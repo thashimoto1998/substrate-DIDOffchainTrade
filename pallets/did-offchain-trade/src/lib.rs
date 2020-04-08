@@ -57,7 +57,7 @@ pub trait Trait: system::Trait + pallet_did::Trait {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as DIDOffchainTrade {
+	trait Store for Module<T: Trait> as DIDDIDTrade {
 		pub ConditionKey get(fn condition_key): i32;
 		pub AccessConditionAddressList get(fn condition_address): 
 			map hasher(twox_64_concat) i32 => Option<T::AccountId>;
