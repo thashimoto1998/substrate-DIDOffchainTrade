@@ -98,7 +98,7 @@ fn test_create_access_condition() {
 				alice_public.clone(),
 				bob_public.clone(),
 				0,
-				2
+				0
 			)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
@@ -110,9 +110,9 @@ fn test_create_access_condition() {
 		assert_eq!(
 			OffchainTrade::condition_address(0), Some(condition_account.clone())
 		);
-		assert_eq!(OffchainTrade::did_key(), 3);
-		assert_eq!(OffchainTrade::did_list(2), Some(identity.clone()));
-		assert_eq!(OffchainTrade::key_of_did(identity.clone()), Some(2));
+		assert_eq!(OffchainTrade::did_key(), 1);
+		assert_eq!(OffchainTrade::did_list(0), Some(identity.clone()));
+		assert_eq!(OffchainTrade::key_of_did(identity.clone()), Some(0));
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 
 		let risa_pair = account_pair("Risa");
@@ -166,7 +166,7 @@ fn test_intend_settle() {
 		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
-			state: [0, 2].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_1 = app_state_1.nonce.encode();
@@ -207,7 +207,7 @@ fn test_intend_settle() {
 		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
-			state: [0, 1].to_vec()
+			state: [0, -2].to_vec()
 		};
 
 		let mut encoded_2 = app_state_2.nonce.encode();
@@ -245,7 +245,7 @@ fn test_intend_settle() {
 		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 3,
-			state: [0, 0].to_vec()
+			state: [0, -1].to_vec()
 		};
 
 		let mut encoded_3 = app_state_3.nonce.encode();
@@ -278,8 +278,7 @@ fn test_intend_settle() {
 
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
 		assert_eq!(OffchainTrade::get_outcome(&condition_account), false);
-		assert_eq!(OffchainTrade::test_get_owner
-			(condition_account.clone()), bob_public.clone());
+		assert_eq!(OffchainTrade::get_owner(condition_account.clone()), bob_public.clone());
 	
 	
 		let app_state_4 = AppState {
@@ -475,14 +474,14 @@ fn test_set_new_did() {
 		let expected_event = TestEvent::pallet_did_offchain_trade(
 				RawEvent::NewDID(
 					identity.clone(),
-					2
+					0
 				)
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
 
-		assert_eq!(OffchainTrade::did_key(), 3);
-		assert_eq!(OffchainTrade::did_list(2), Some(identity.clone()));
-		assert_eq!(OffchainTrade::key_of_did(identity.clone()), Some(2));
+		assert_eq!(OffchainTrade::did_key(), 1);
+		assert_eq!(OffchainTrade::did_list(0), Some(identity.clone()));
+		assert_eq!(OffchainTrade::key_of_did(identity.clone()), Some(0));
 	});
 }
 
@@ -526,7 +525,7 @@ fn test_another_did_trade(){
 		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
-			state: [0, 2].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_1 = app_state_1.nonce.encode();
@@ -555,12 +554,12 @@ fn test_another_did_trade(){
 				identity_2.clone()
 			)
 		);
-		assert_eq!(OffchainTrade::key_of_did(identity_2.clone()), Some(3));
+		assert_eq!(OffchainTrade::key_of_did(identity_2.clone()), Some(1));
 
 		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
-			state: [0, 3].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_2 = app_state_2.nonce.encode();
@@ -587,7 +586,7 @@ fn test_another_did_trade(){
 		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 2,
-			state: [0, 1].to_vec(),
+			state: [0, -2].to_vec(),
 		};
 
 		let mut encoded_3 = app_state_3.nonce.encode();
@@ -614,7 +613,7 @@ fn test_another_did_trade(){
 		let app_state_4 = AppState {
 			nonce: 2,
 			seq_num: 3,
-			state: [0, 3].to_vec(),
+			state: [0, 1].to_vec(),
 		};
 
 		let mut encoded_4 = app_state_4.nonce.encode();
@@ -685,7 +684,7 @@ fn test_another_did_trade_and_swap_owner_grantee() {
 		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
-			state: [0, 2].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_1 = app_state_1.nonce.encode();
@@ -714,12 +713,12 @@ fn test_another_did_trade_and_swap_owner_grantee() {
 				identity_2.clone()
 			)
 		);
-		assert_eq!(OffchainTrade::key_of_did(identity_2.clone()), Some(3));
+		assert_eq!(OffchainTrade::key_of_did(identity_2.clone()), Some(1));
 
 		let app_state_2 = AppState {
 			nonce: 2,
 			seq_num: 2,
-			state: [0, 0].to_vec(),
+			state: [0, -1].to_vec(),
 		};
 
 		let mut encoded_2 = app_state_2.nonce.encode();
@@ -742,12 +741,12 @@ fn test_another_did_trade_and_swap_owner_grantee() {
 			)
 		);
 		assert_eq!(OffchainTrade::is_finalized(&condition_account), false);
-		assert_eq!(OffchainTrade::test_get_owner(condition_account.clone()), bob_public.clone());
+		assert_eq!(OffchainTrade::get_owner(condition_account.clone()), bob_public.clone());
 
 		let app_state_3 = AppState {
 			nonce: 2,
 			seq_num: 3,
-			state: [0, 3].to_vec(),
+			state: [0, 1].to_vec(),
 		};
 
 		let mut encoded_3 = app_state_3.nonce.encode();
@@ -810,7 +809,7 @@ fn test_did_trade_with_two_grantee() {
 		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
-			state: [0, 2].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_1 = app_state_1.nonce.encode();
@@ -853,7 +852,7 @@ fn test_did_trade_with_two_grantee() {
 		let app_state_2 = AppState {
 			nonce: 3,
 			seq_num: 1,
-			state: [1, 2].to_vec(),
+			state: [1, 1].to_vec(),
 		};
 
 		let mut encoded_2 = app_state_2.nonce.encode();
@@ -938,7 +937,7 @@ fn test_dispatch_function() {
 			)
 		);
 
-		let mut expected_event = TestEvent::pallet_did_offchain_trade(
+		let expected_event = TestEvent::pallet_did_offchain_trade(
 			RawEvent::AccessCondition(
 				2,
 				players_vec.clone(),
@@ -949,150 +948,18 @@ fn test_dispatch_function() {
 		);
 		assert!(System::events().iter().any(|a| a.event == expected_event));
 
-
-		assert_ok!(
-			OffchainTrade::access_condition_address(
-				Origin::signed(alice_public.clone()),
-				0
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::ConditionAddress(
-				condition_account.clone()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::access_condition_address_key(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::ConditionAddressKey(
-				0
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_did(
-				Origin::signed(alice_public.clone()),
-				2
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::DID(
-				identity.clone()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_did(
-				Origin::signed(alice_public.clone()),
-				2
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::DID(
-				identity.clone()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_did_key(
-				Origin::signed(alice_public.clone()),
-				identity.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::DIDKey(
-				2
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_owner(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::Owner(
-				alice_public.clone(),
-				System::block_number()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_grantee(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::Grantee(
-				bob_public.clone(),
-				System::block_number()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_seq_num(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::SeqNum(
-				0,
-				System::block_number()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
-
-		assert_ok!(
-			OffchainTrade::get_status(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::IdleStatus(
-				condition_account.clone(),
-				System::block_number()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
+		assert_eq!(OffchainTrade::get_nonce(condition_account.clone()), 2);
+		assert_eq!(OffchainTrade::get_seq_num(condition_account.clone()), 0);
+		assert_eq!(OffchainTrade::get_status(condition_account.clone()), 0);
+		assert_eq!(OffchainTrade::get_owner(condition_account.clone()), alice_public.clone());
+		assert_eq!(OffchainTrade::get_grantee(condition_account.clone()), bob_public.clone());
+		assert_eq!(OffchainTrade::get_did_key(identity.clone()), 0);
+		assert_eq!(OffchainTrade::access_condition_address_key(condition_account.clone()), 0);
 	
-
 		let app_state_1 = AppState {
 			nonce: 2,
 			seq_num: 1,
-			state: [0, 2].to_vec(),
+			state: [0, 0].to_vec(),
 		};
 
 		let mut encoded_1 = app_state_1.nonce.encode();
@@ -1115,21 +982,7 @@ fn test_dispatch_function() {
 			)
 		);
 
-		assert_ok!(
-			OffchainTrade::get_status(
-				Origin::signed(alice_public.clone()),
-				condition_account.clone()
-			)
-		);
-
-		expected_event = TestEvent::pallet_did_offchain_trade(
-			RawEvent::FinalizedStatus(
-				condition_account.clone(),
-				System::block_number()
-			)
-		);
-		assert!(System::events().iter().any(|a| a.event == expected_event));
-
+		assert_eq!(OffchainTrade::get_status(condition_account.clone()), 1);
 	});
 }
 
