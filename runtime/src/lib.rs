@@ -250,7 +250,7 @@ construct_runtime!(
 		Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		DIDDIDTrade: did_offchain_trade::{Module, Call, Storage, Event<T>},
+		DIDTrade: did_offchain_trade::{Module, Call, Storage, Event<T>},
 		PalletDID: pallet_did::{Module, Call, Storage, Event<T>},
 	}
 );
