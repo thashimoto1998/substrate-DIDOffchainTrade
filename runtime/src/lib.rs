@@ -38,10 +38,10 @@ pub use frame_support::{
 };
 
 /// Importing a did-offchain-trade pallet
-pub use did-offchain-trade;
+pub use did_offchain_trade;
 
 /// Importing a pallet-did pallet
-pub use pallet-did;
+pub use pallet_did;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -250,7 +250,7 @@ construct_runtime!(
 		Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		DIDOffchainTrade: did_offchain_trade::{Module, Call, Storage, Event<T>},
+		DIDTrade: did_offchain_trade::{Module, Call, Storage, Event<T>},
 		PalletDID: pallet_did::{Module, Call, Storage, Event<T>},
 	}
 );
