@@ -250,7 +250,7 @@ decl_module! {
 			} else if transaction.app_state.state[1] == -2 {
 			/// If state[1] is -2, AppStatus update from FINALIZED to IDLE.
 				
-				/// Checks if AppStatus is IDLE.
+				/// Checks if AppStatus is FINALIZED.
 				ensure!(access_condition.status == AppStatus::FINALIZED, Error::<T>::NotFinalizedStatus);
 				
 				let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
