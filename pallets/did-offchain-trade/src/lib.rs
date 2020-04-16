@@ -185,48 +185,27 @@ decl_module! {
 				Some(_condtion) => _condtion,
 				None => return Err(Error::<T>::InvalidConditionAddress.into())
 			};
-			
-			let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
-			ensure!(&who == &players[0] || &who == &players[1], Error::<T>::InvalidSender);
-			
-			let did = match transaction.app_state.state.did {
-				Some(_did) => _did,
-				None => return Err(Error::<T>::NotExist.into())
-			};
 
-			let did_owner = match <pallet_did::Module<T>>::owner_of(&did) {
-					Some(_owner) => _owner,
-					None => return Err(Error::<T>::NotExist.into())
-				};
-
-			let mut encoded;
-			if &did_owner == &access_condition.owner {
-				encoded = transaction.app_state.nonce.encode();
-				encoded.extend(transaction.app_state.seq_num.encode());
-				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
-				encoded.extend(transaction.app_state.state.op.encode());
-				encoded.extend(did.clone().encode());
-			} else {
-				encoded = transaction.app_state.nonce.encode();
-				encoded.extend(transaction.app_state.seq_num.encode());
-				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
-				encoded.extend(transaction.app_state.state.op.encode());
-			}
-
-			/// Checks if a state proof is signed by channel peer.
-			Self::valid_signers(transaction.sigs, &encoded, players)?;
-	
 			/// Checks if a nonce is valid.
 			ensure!(access_condition.nonce == transaction.app_state.nonce, Error::<T>::InvalidNonce);
 			/// Checks if a sequence number is higher than previous one.
 			ensure!(access_condition.seq_num < transaction.app_state.seq_num, Error::<T>::InvalidSeqNum);
 			
+			let players = vec![access_condition.owner.clone(), access_condition.grantee.clone()];
+			
 			if transaction.app_state.state.op == 0 {
 			/// If state.op is 0, AppStatus update from FINALED to IDLE and replace owner and grantee.
-				
-				/// Checks if AppStatus is FINALIZED.
+			
+				let mut encoded = transaction.app_state.nonce.encode();
+				encoded.extend(transaction.app_state.seq_num.encode());
+				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
+				encoded.extend(transaction.app_state.state.op.encode());
+				/// Checks if a state proof is signed by channel peer.
+				Self::valid_signers(transaction.sigs, &encoded, players)?;
+
+				/// Check if AppStatus is FINALIZED.
 				ensure!(access_condition.status == AppStatus::FINALIZED, Error::<T>::NotFinalizedStatus);
-				
+
 				let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
 				let new_access_condition = AccessConditionOf::<T> {
 					nonce: access_condition.nonce,
@@ -249,7 +228,14 @@ decl_module! {
 			} else if transaction.app_state.state.op == 1 {
 			/// If state[1] is 1, AppStatus update from FINALIZED to IDLE.
 				
-				/// Checks if AppStatus is FINALIZED.
+				let mut encoded = transaction.app_state.nonce.encode();
+				encoded.extend(transaction.app_state.seq_num.encode());
+				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
+				encoded.extend(transaction.app_state.state.op.encode());
+				/// Check if a state proof is signed by channel peer.
+				Self::valid_signers(transaction.sigs, &encoded, players)?;
+				
+				/// Check if AppStatus is FINALIZED.
 				ensure!(access_condition.status == AppStatus::FINALIZED, Error::<T>::NotFinalizedStatus);
 				
 				let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
@@ -276,7 +262,27 @@ decl_module! {
 			/// If state[1] is 2, grantee is granted data access control rights, 
 			/// AppStatus update from IDLE to FINALIZED and outcome update true.
 			
-				/// Checks if AppStatus is IDLE.
+				let did = match transaction.app_state.state.did {
+					Some(_did) => _did,
+					None => return Err(Error::<T>::NotExist.into())
+				};
+
+				let mut encoded = transaction.app_state.nonce.encode();
+				encoded.extend(transaction.app_state.seq_num.encode());
+				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
+				encoded.extend(transaction.app_state.state.op.encode());
+				encoded.extend(did.clone().encode());
+				/// Checks if a state proof is signed by channel peer.
+				Self::valid_signers(transaction.sigs, &encoded, players)?;
+
+				let did_owner = match <pallet_did::Module<T>>::owner_of(&did) {
+					Some(_owner) => _owner,
+					None => return Err(Error::<T>::NotExist.into())
+				};
+				/// Check if did owner is valid.
+				ensure!(&did_owner == &access_condition.owner, Error::<T>::NotOwner);
+				
+				/// Check if AppStatus is IDLE.
 				ensure!(access_condition.status == AppStatus::IDLE, Error::<T>::NotIdleStatus);
 
 				let new_access_condition = AccessConditionOf::<T> {
