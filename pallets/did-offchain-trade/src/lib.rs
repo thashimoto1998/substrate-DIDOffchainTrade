@@ -28,7 +28,6 @@
 //!
 //! * `create_access_condition` - Create a new Access Condition from channel peer.
 //! * `intend_settle` - Update Access Condition and DocumentPermissionsState by co-signed state proof from channel peer.
-//! * `set_new_did` - Set a new did to DID List.
 //! * `get_access_condition` - Get field of Access Condition.
 //!
 //!	### Dispatchable Functions
@@ -41,8 +40,6 @@
 //! * `get_status` - Get the AppStatus which is field of AccessCondition. AppStatus is IDLE or FINALIZED.
 //! * `get_owner` - Get the owner which is field of AccessCondition.
 //! * `get_grantee` - Get the grantee which is field of AccessCondition.
-//! * `get_did_key` - Get the key of did.
-//! * `access_condition_address_key` - Get the key of AccessCondition.
 //!
 //! ## Dependencies
 //!
@@ -197,7 +194,7 @@ decl_module! {
 			encoded.extend(transaction.app_state.state.condition_address.clone().encode());
 			encoded.extend(transaction.app_state.state.op.encode());
 			encoded.extend(transaction.app_state.state.did.clone().encode());
-			
+
 			/// Checks if a state proof is signed by channel peer.
 			Self::valid_signers(transaction.sigs, &encoded, players)?;
 	
@@ -333,8 +330,6 @@ decl_event!(
 		SwapPosition(AccountId, BlockNumber),
 		SetIdle(AccountId, BlockNumber),
 		IntendSettle(AccountId, BlockNumber),
-		NewDID(AccountId, i32),
-		DIDKey(i32),
 		AccessCondition(i32, Vec<AccountId>, i32, AccountId, AccountId),
 	}
 );
@@ -345,16 +340,15 @@ decl_error! {
 		InvalidPlayerLength,
 		InvalidSender,
 		InvalidState,
-		InvalidStateLength,
-		InvalidDIDState,
 		InvalidNonce,
 		InvalidSeqNum,
 		InvalidSignature,
-		InvalidConditionAddress,
-		NotExist,
 		ExistAddress,
 		NotIdleStatus,
 		NotFinalizedStatus,
+		InvalidConditionAddress,
+		NotExist,
+
 	}
 }
 
@@ -362,14 +356,14 @@ impl<T: Trait> Module<T> {
 	/// Checks if signature is valid.
 	pub fn valid_signers(
 		signatures: Vec<<T as Trait>::Signature>,
-		msg: &[u8],
+		encoded: &[u8],
 		signers: Vec<T::AccountId>,
 	) -> DispatchResult {
 		let signature1 = &signatures[0];
 		let signature2 = &signatures[1];
-		if signature1.verify(msg, &signers[0]) && signature2.verify(msg, &signers[1]) {
+		if signature1.verify(encoded, &signers[0]) && signature2.verify(encoded, &signers[1]) {
 			Ok(())
-		} else if signature1.verify(msg, &signers[1]) && signature2.verify(msg, &signers[0]) {
+		} else if signature1.verify(encoded, &signers[1]) && signature2.verify(encoded, &signers[0]) {
 			Ok(())
 		} else {
 			Err(Error::<T>::InvalidSignature.into())
