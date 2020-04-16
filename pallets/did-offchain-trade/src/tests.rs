@@ -299,8 +299,82 @@ fn test_intend_settle() {
 			),
 			Error::<Test>::InvalidConditionAddress
 		);
+
+
+		let invalid_nonce = 3;
+		let state_3 = State {
+			condition_address: condition_account,
+			op: 2,
+			did: Some(identity),
+		};
+
+		let app_state_3 = AppState {
+			nonce: invalid_nonce,
+			seq_num: 3,
+			state: state_3,
+		};
+
+		let mut encoded_3 = app_state_3.nonce.encode();
+		encoded_3.extend(app_state_3.seq_num.encode());
+		encoded_3.extend(app_state_3.state.condition_address.clone().encode());
+		encoded_3.extend(app_state_3.state.op.encode());
+		encoded_3.extend(app_state_3.state.did.unwrap().clone().encode());
+
+		let alice_sig_3 = alice_pair.sign(&encoded_3);
+		let bob_sig_3 = bob_pair.sign(&encoded_3);
+		let sig_vec_3 = [alice_sig_3.clone(), bob_sig_3.clone()].to_vec();
+
+		
+		let state_proof_3 = StateProof {
+			app_state: app_state_3,
+			sigs: sig_vec_3
+		};
+
+		assert_noop!(
+			DIDTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_3
+			),
+			Error::<Test>::InvalidNonce
+		);
 		
 
+		let invalid_seq_num = 0;
+		let state_4 = State {
+			condition_address: condition_account,
+			op: 2,
+			did: Some(identity),
+		};
+
+		let app_state_4 = AppState {
+			nonce: nonce,
+			seq_num: invalid_seq_num,
+			state: state_4,
+		};
+
+		let mut encoded_4 = app_state_4.nonce.encode();
+		encoded_4.extend(app_state_4.seq_num.encode());
+		encoded_4.extend(app_state_4.state.condition_address.clone().encode());
+		encoded_4.extend(app_state_4.state.op.encode());
+		encoded_4.extend(app_state_4.state.did.unwrap().clone().encode());
+
+		let alice_sig_4 = alice_pair.sign(&encoded_3);
+		let bob_sig_4 = bob_pair.sign(&encoded_3);
+		let sig_vec_4 = [alice_sig_4.clone(), bob_sig_4.clone()].to_vec();
+
+		
+		let state_proof_4 = StateProof {
+			app_state: app_state_4,
+			sigs: sig_vec_4
+		};
+
+		assert_noop!(
+			DIDTrade::intend_settle(
+				Origin::signed(alice_public.clone()),
+				state_proof_4
+			),
+			Error::<Test>::InvalidSeqNum
+		);
 	});
 }
 
