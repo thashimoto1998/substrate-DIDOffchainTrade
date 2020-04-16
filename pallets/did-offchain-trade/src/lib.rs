@@ -90,7 +90,7 @@ type AccessConditionOf<T> = AccessCondition<<T as system::Trait>::AccountId>;
 pub struct State<AccountId> {
 	pub condition_address: AccountId,
 	pub op: u8,
-	pub did: AccountId,
+	pub did: Option<AccountId>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
@@ -189,11 +189,29 @@ decl_module! {
 			let players: Vec<T::AccountId> = vec![access_condition.players[0].clone(), access_condition.players[1].clone()];
 			ensure!(&who == &players[0] || &who == &players[1], Error::<T>::InvalidSender);
 			
-			let mut encoded = transaction.app_state.nonce.encode();
-			encoded.extend(transaction.app_state.seq_num.encode());
-			encoded.extend(transaction.app_state.state.condition_address.clone().encode());
-			encoded.extend(transaction.app_state.state.op.encode());
-			encoded.extend(transaction.app_state.state.did.clone().encode());
+			let did = match transaction.app_state.state.did {
+				Some(_did) => _did,
+				None => return Err(Error::<T>::NotExist.into())
+			};
+
+			let did_owner = match <pallet_did::Module<T>>::owner_of(&did) {
+					Some(_owner) => _owner,
+					None => return Err(Error::<T>::NotExist.into())
+				};
+
+			let mut encoded;
+			if &did_owner == &access_condition.owner {
+				encoded = transaction.app_state.nonce.encode();
+				encoded.extend(transaction.app_state.seq_num.encode());
+				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
+				encoded.extend(transaction.app_state.state.op.encode());
+				encoded.extend(did.clone().encode());
+			} else {
+				encoded = transaction.app_state.nonce.encode();
+				encoded.extend(transaction.app_state.seq_num.encode());
+				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
+				encoded.extend(transaction.app_state.state.op.encode());
+			}
 
 			/// Checks if a state proof is signed by channel peer.
 			Self::valid_signers(transaction.sigs, &encoded, players)?;
@@ -258,15 +276,6 @@ decl_module! {
 			/// If state[1] is 2, grantee is granted data access control rights, 
 			/// AppStatus update from IDLE to FINALIZED and outcome update true.
 			
-				let did = transaction.app_state.state.did;
-				
-				let did_owner = match <pallet_did::Module<T>>::owner_of(&did) {
-					Some(_owner) => _owner,
-					None => return Err(Error::<T>::NotExist.into())
-				};
-				/// Check if did owner is valid.
-				ensure!(&access_condition.owner == &did_owner, Error::<T>::NotOwner);
-				
 				/// Checks if AppStatus is IDLE.
 				ensure!(access_condition.status == AppStatus::IDLE, Error::<T>::NotIdleStatus);
 
