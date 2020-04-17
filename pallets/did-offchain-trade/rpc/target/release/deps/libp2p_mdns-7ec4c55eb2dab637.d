@@ -1,0 +1,10 @@
+/Users/hashimototatsuki/substrate-DIDOffchainTrade/pallets/did-offchain-trade/rpc/target/release/deps/libp2p_mdns-7ec4c55eb2dab637.rmeta: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/behaviour.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/dns.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/service.rs
+
+/Users/hashimototatsuki/substrate-DIDOffchainTrade/pallets/did-offchain-trade/rpc/target/release/deps/liblibp2p_mdns-7ec4c55eb2dab637.rlib: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/behaviour.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/dns.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/service.rs
+
+/Users/hashimototatsuki/substrate-DIDOffchainTrade/pallets/did-offchain-trade/rpc/target/release/deps/libp2p_mdns-7ec4c55eb2dab637.d: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/behaviour.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/dns.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/service.rs
+
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/lib.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/behaviour.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/dns.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-mdns-0.16.0/src/service.rs:

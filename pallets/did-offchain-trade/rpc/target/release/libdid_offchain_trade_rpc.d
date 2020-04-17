@@ -1,0 +1,1 @@
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/libdid_offchain_trade_rpc.rlib: /Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/runtime-api/src/lib.rs /Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/src/lib.rs

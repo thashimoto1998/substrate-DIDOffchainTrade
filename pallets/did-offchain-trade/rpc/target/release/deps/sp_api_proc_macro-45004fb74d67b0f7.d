@@ -1,0 +1,8 @@
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/deps/libsp_api_proc_macro-45004fb74d67b0f7.dylib: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/impl_runtime_apis.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/decl_runtime_apis.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/utils.rs
+
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/deps/sp_api_proc_macro-45004fb74d67b0f7.d: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/impl_runtime_apis.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/decl_runtime_apis.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/utils.rs
+
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/lib.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/impl_runtime_apis.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/decl_runtime_apis.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-api-proc-macro-2.0.0-alpha.5/src/utils.rs:

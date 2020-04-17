@@ -1,0 +1,9 @@
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/deps/wasm_bindgen_futures-a8643c8ed24e030b.rmeta: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/queue.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/task/singlethread.rs
+
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/deps/libwasm_bindgen_futures-a8643c8ed24e030b.rlib: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/queue.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/task/singlethread.rs
+
+/Users/hashimototatsuki/substrate-DIDDIDTrade/pallets/did-offchain-trade/rpc/target/release/deps/wasm_bindgen_futures-a8643c8ed24e030b.d: /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/lib.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/queue.rs /Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/task/singlethread.rs
+
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/lib.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/queue.rs:
+/Users/hashimototatsuki/.cargo/registry/src/github.com-1ecc6299db9ec823/wasm-bindgen-futures-0.4.10/src/task/singlethread.rs:
