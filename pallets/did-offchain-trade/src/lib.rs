@@ -69,9 +69,9 @@ mod mock;
 /// Access Condition 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AccessCondition<AccountId> {
-	pub nonce: i32,
+	pub nonce: u32,
 	pub players: Vec<AccountId>,
-	pub seq_num: i32,
+	pub seq_num: u32,
 	pub status: AppStatus,
 	pub outcome: bool,
 	pub owner: AccountId,
@@ -95,8 +95,8 @@ pub struct State<AccountId> {
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
 pub struct AppState<AccountId> {
-	pub nonce: i32,
-	pub seq_num: i32,
+	pub nonce: u32,
+	pub seq_num: u32,
 	pub state: State<AccountId>,
 }
 
@@ -116,8 +116,6 @@ pub trait Trait: system::Trait + pallet_did::Trait {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as DIDTOffchainTrade {
-		/// The list of Condition Address.
-		pub ConditionAddressList get(fn address_list): Vec<T::AccountId>;
 		/// The set of address of Access Condition and Access Condition. 
 		pub AccessConditionList get(fn condition_list): 
 			map hasher(twox_64_concat) T::AccountId => Option<AccessConditionOf<T>>;
@@ -139,7 +137,7 @@ decl_module! {
 		pub fn create_access_condition(
 			origin,
 			players: Vec<T::AccountId>, 
-			nonce: i32,
+			nonce: u32,
 			did: T::AccountId,
 			condition_address: T::AccountId
 		) -> DispatchResult {
@@ -147,7 +145,7 @@ decl_module! {
 
 			/// Checks if number of channel peer is 2.
 			ensure!(players.len() == 2, Error::<T>::InvalidPlayerLength);
-			
+
 			let owner = match <pallet_did::Module<T>>::owner_of(&did) {
 				Some(_owner) => _owner,
 				None => return Err(Error::<T>::NotExist.into())
@@ -156,11 +154,8 @@ decl_module! {
 			ensure!(owner == players[0] || owner == players[1], Error::<T>::NotOwner);
 
 			/// Check if address of Access Condition is not exist.
-			ensure!(<ConditionAddressList<T>>::get().contains(&condition_address) == false, Error::<T>::ExistAddress);
-
-			/// Append address of Access Condition.
-			<ConditionAddressList<T>>::append(vec![condition_address.clone()])?;
-
+			ensure!(<AccessConditionList<T>>::contains_key(&condition_address) == false, Error::<T>::ExistAddress);
+			
 			if owner == players[0] {
 				/// Add Access Condition.
 				Self::set_access_condition(condition_address, nonce, players[0].clone(), players[1].clone())?;
@@ -177,9 +172,10 @@ decl_module! {
 			origin, 
 			transaction: StateProof<<T as Trait>::Signature, T::AccountId>,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 
 			let condition_address = transaction.app_state.state.condition_address.clone();
+			
 			/// Get Access Condition.
 			let access_condition = match Self::condition_list(&condition_address) {
 				Some(_condtion) => _condtion,
@@ -188,6 +184,7 @@ decl_module! {
 
 			/// Checks if a nonce is valid.
 			ensure!(access_condition.nonce == transaction.app_state.nonce, Error::<T>::InvalidNonce);
+			
 			/// Checks if a sequence number is higher than previous one.
 			ensure!(access_condition.seq_num < transaction.app_state.seq_num, Error::<T>::InvalidSeqNum);
 			
@@ -196,11 +193,11 @@ decl_module! {
 			if transaction.app_state.state.op == 0 {
 			/// If state.op is 0, AppStatus update from FINALED to IDLE and replace owner and grantee.
 			
+				/// Checks if a state proof is signed by channel peer.
 				let mut encoded = transaction.app_state.nonce.encode();
 				encoded.extend(transaction.app_state.seq_num.encode());
 				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
 				encoded.extend(transaction.app_state.state.op.encode());
-				/// Checks if a state proof is signed by channel peer.
 				Self::valid_signers(transaction.sigs, &encoded, players)?;
 
 				/// Check if AppStatus is FINALIZED.
@@ -226,13 +223,13 @@ decl_module! {
 					)
 				);
 			} else if transaction.app_state.state.op == 1 {
-			/// If state[1] is 1, AppStatus update from FINALIZED to IDLE.
+			/// If state.op is 1, AppStatus update from FINALIZED to IDLE.
 				
+				/// Check if a state proof is signed by channel peer.
 				let mut encoded = transaction.app_state.nonce.encode();
 				encoded.extend(transaction.app_state.seq_num.encode());
 				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
 				encoded.extend(transaction.app_state.state.op.encode());
-				/// Check if a state proof is signed by channel peer.
 				Self::valid_signers(transaction.sigs, &encoded, players)?;
 				
 				/// Check if AppStatus is FINALIZED.
@@ -259,7 +256,7 @@ decl_module! {
 					)
 				);
 			} else if transaction.app_state.state.op == 2 {
-			/// If state[1] is 2, grantee is granted data access control rights, 
+			/// If state.op is 2, grantee is granted data access control rights, 
 			/// AppStatus update from IDLE to FINALIZED and outcome update true.
 			
 				let did = match transaction.app_state.state.did {
@@ -267,18 +264,19 @@ decl_module! {
 					None => return Err(Error::<T>::NotExist.into())
 				};
 
+				/// Checks if a state proof is signed by channel peer.
 				let mut encoded = transaction.app_state.nonce.encode();
 				encoded.extend(transaction.app_state.seq_num.encode());
 				encoded.extend(transaction.app_state.state.condition_address.clone().encode());
 				encoded.extend(transaction.app_state.state.op.encode());
 				encoded.extend(did.clone().encode());
-				/// Checks if a state proof is signed by channel peer.
 				Self::valid_signers(transaction.sigs, &encoded, players)?;
 
 				let did_owner = match <pallet_did::Module<T>>::owner_of(&did) {
 					Some(_owner) => _owner,
 					None => return Err(Error::<T>::NotExist.into())
 				};
+
 				/// Check if did owner is valid.
 				ensure!(&did_owner == &access_condition.owner, Error::<T>::NotOwner);
 				
@@ -297,6 +295,7 @@ decl_module! {
 
 				/// Update Access condition.
 				<AccessConditionList<T>>::mutate(&condition_address, |new| *new = Some(new_access_condition.clone()));
+				
 				/// Add DocumentPermissionState.
 				<DocumentPermissionsStates<T>>::insert(&did, &access_condition.grantee, 1);
 			
@@ -345,7 +344,7 @@ decl_event!(
 		SwapPosition(AccountId, BlockNumber),
 		SetIdle(AccountId, BlockNumber),
 		IntendSettle(AccountId, BlockNumber),
-		AccessCondition(i32, Vec<AccountId>, i32, AccountId, AccountId),
+		AccessCondition(u32, Vec<AccountId>, u32, AccountId, AccountId),
 	}
 );
 
@@ -388,7 +387,7 @@ impl<T: Trait> Module<T> {
 	/// Set Access Condition.
 	fn set_access_condition(
 		condition_address: T::AccountId, 
-		nonce: i32,
+		nonce: u32,
 		owner: T::AccountId,
 		grantee: T::AccountId,
 	) -> DispatchResult {
@@ -459,58 +458,58 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Get nonce of Access Condition.
-	pub fn get_nonce(condition_address: T::AccountId) -> i32 {
+	pub fn get_nonce(condition_address: T::AccountId) -> Option<u32> {
 		let access_condition = match Self::condition_list(&condition_address) {
 			Some(_condition) => _condition,
-			None => return -1
+			None => return None
 		};
 
-		return access_condition.nonce;
+		return Some(access_condition.nonce);
 	}
 
 	/// Get sequence number of Access Condition.
-	pub fn get_seq_num(condition_address: T::AccountId) -> i32 {
+	pub fn get_seq_num(condition_address: T::AccountId) -> Option<u32> {
 		let access_condition = match Self::condition_list(&condition_address) {
 			Some(_condition) => _condition,
-			None => return -1
+			None => return None
 		};
 
-		return access_condition.seq_num;
+		return Some(access_condition.seq_num);
 	}
 
 	/// Get AppStatus of Access Condition.
 	/// If possible, this function return AppStatus
-	pub fn get_status(condition_address: T::AccountId) -> i32 {
+	pub fn get_status(condition_address: T::AccountId) -> Option<AppStatus> {
 		let access_condition = match Self::condition_list(&condition_address) {
 			Some(_condition) => _condition,
-			None => return -1
+			None => return None
 		};
 		
 		if access_condition.status == AppStatus::IDLE {
-			return 0;
+			return Some(AppStatus::IDLE);
 		} else {
-			return 1;
+			return Some(AppStatus::FINALIZED);
 		}
 	}
 
 	/// Get Owner of Access Condition.
-	pub fn get_owner(condition_address: T::AccountId) -> T::AccountId {
+	pub fn get_owner(condition_address: T::AccountId) -> Option<T::AccountId> {
 		let access_condition = match Self::condition_list(&condition_address) {
 			Some(_condition) => _condition,
-			None => return condition_address
+			None => return None
 		};
 
-		return access_condition.owner;
+		return Some(access_condition.owner);
 	}
 
 	/// Get Grantee of Access Condition.
-	pub fn get_grantee(condition_address: T::AccountId) -> T::AccountId {
+	pub fn get_grantee(condition_address: T::AccountId) -> Option<T::AccountId> {
 		let access_condition = match Self::condition_list(&condition_address) {
 			Some(_condition) => _condition,
-			None => return condition_address
+			None => return None
 		};
 
-		return access_condition.grantee;
+		return Some(access_condition.grantee);
 	}
 
 }

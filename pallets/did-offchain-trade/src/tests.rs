@@ -21,8 +21,8 @@ pub fn account_key(s: &str) -> sr25519::Public {
 #[test]
 fn validate_signature() {
 	new_test_ext().execute_with(|| {
-		let nonce: i32 = 1;
-		let seq_num: i32 = 0;
+		let nonce: u32 = 1;
+		let seq_num: u32 = 0;
 		
 		let alice_pair = account_pair("Alice");
 		let alice_public = alice_pair.public();
